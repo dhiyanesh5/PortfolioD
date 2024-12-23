@@ -1,4 +1,4 @@
-# PortfolioD
+# Portfolio Website
 
 This is a portfolio website showcasing projects, skills, and experience. The website is designed to highlight professional accomplishments and provide an interactive way for visitors to explore the creator's work.
 
@@ -18,13 +18,11 @@ This is a portfolio website showcasing projects, skills, and experience. The web
 - **Bootstrap**: Framework for responsive and mobile-first design.
 
 ### Backend
-- **Flask**: Lightweight web framework for handling server-side operations.
-
-### Database
-- **SQLite**: For storing project details, user inquiries, and other dynamic content.
+- **Node.js**: For server-side logic and handling requests.
+- **Express.js**: Lightweight framework for building server-side applications.
 
 ### Deployment
-- **Heroku**: Platform used for deploying the website.
+- **Render**: Platform used for deploying the website.
 
 ## Installation
 
@@ -40,31 +38,23 @@ Follow the steps below to set up the project locally:
    cd portfolio-website
    ```
 
-3. Create a virtual environment and activate it:
+3. Install the required dependencies:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   npm install
    ```
 
-4. Install the required dependencies:
+4. Start the server:
    ```bash
-   pip install -r requirements.txt
+   node server.js
    ```
 
-5. Run the Flask development server:
-   ```bash
-   flask run
-   ```
-
-6. Open a browser and navigate to `http://127.0.0.1:5000` to view the website.
+5. Open a browser and navigate to `http://localhost:3000` to view the website.
 
 ## Usage
 
 - **Home Page**: Overview of the creator and their professional background.
 - **Projects Page**: Browse through showcased projects.
 - **Contact Page**: Reach out using the built-in contact form.
-
-
 
 ## Disclaimer
 
