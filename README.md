@@ -1,4 +1,4 @@
-# Portfolio Website
+# PortfolioD
 
 This is a portfolio website showcasing projects, skills, and experience. The website is designed to highlight professional accomplishments and provide an interactive way for visitors to explore the creator's work.
 
@@ -30,7 +30,7 @@ Follow the steps below to set up the project locally:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/username/portfolio-website.git
+   git clone https://github.com/dhiyanesh5/PortfolioD.git
    ```
 
 2. Navigate to the project directory:
@@ -62,4 +62,4 @@ This website is based on templates provided by **HTML5UP** and **BootstrapMade**
 
 ## Contact
 
-For any inquiries or feedback, feel free to reach out via the contact form on the website or email directly at `youremail@example.com`.
+For any inquiries or feedback, feel free to reach out via the contact form on the website or email directly at `dhiyaneshg05@gmail.com`.
