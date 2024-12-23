@@ -58,7 +58,11 @@ Follow the steps below to set up the project locally:
 
 ## Disclaimer
 
-This website is based on templates provided by **HTML5UP** and **BootstrapMade**. We do not claim ownership of the original designs or any associated licenses. If you are the original author and have concerns, please contact us.
+This website is based on templates provided by **HTML5UP** and **BootstrapMade**. We do not claim ownership of the original designs or any associated licenses. For more details, you can review their respective licenses:
+- **HTML5UP License**: [https://html5up.net/license](https://html5up.net/license)
+- **BootstrapMade License**: [https://bootstrapmade.com/license/](https://bootstrapmade.com/license/)
+
+If you are the original author and have concerns, please contact us.
 
 ## Contact
 
