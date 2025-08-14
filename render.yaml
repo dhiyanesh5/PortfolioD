@@ -1,0 +1,15 @@
+# render.yaml
+# Configuration for your static portfolio website
+
+services:
+  - type: web
+    name: dhiyanesh-portfolio  # You can name this whatever you like
+    env: static
+    
+    # This line tells Render that your website's files are in the 'public' folder.
+    staticPublishPath: ./public
+    
+    # This section removes the .html extension from your URLs.
+    rewrites:
+      - source: /:path((?!\\.).*)
+        destination: /:path.html

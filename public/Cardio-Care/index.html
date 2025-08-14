@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardioCareML</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/png" href="assets/heart-beat.png">
+    <link href="https://fonts.googleapis.com/css2?family=Italianno&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 >CardioCareML</h1>
+        <form id="predictionForm">
+            <label for="age">Age (in Years):</label>
+            <input type="number" id="age" required><br><br>
+
+            <label for="sex">Sex (1 = Male, 0 = Female):</label>
+            <input type="number" id="sex" required><br><br>
+
+            <label for="cp">Chest Pain Type( 
+                1: typical angina , 
+                2: atypical angina , 
+                3: non-anginal pain ,
+                4: asymptomatic
+                ):</label>
+            <input type="number" id="cp" required><br><br>
+
+            <label for="trtbps">Resting Blood Pressure (in mm hg):</label>
+            <input type="number" id="trtbps" required><br><br>
+
+            <label for="chol">Cholesterol Level (in mg/dl):</label>
+            <input type="number" id="chol" required><br><br>
+
+            <label for="fbs">Fasting Blood Sugar( >120 mg/dl )  [1 = True, 0 = False]:</label>
+            <input type="number" id="fbs" required><br><br>
+
+            <label for="restecg">Resting Electrocardiographic Results [0 , 1 , 2]:</label>
+            <input type="number" id="restecg" required><br><br>
+
+            <label for="thalachh">Maximum Heart Rate:</label>
+            <input type="number" id="thalachh" required><br><br>
+
+            <label for="exng">Exercise Induced Angina (1 = Yes, 0 = No):</label>
+            <input type="number" id="exng" required><br><br>
+
+            <label for="oldpeak"> ST Depression Induced by Exercise relative to rest :</label>
+            <input type="number" id="oldpeak" step="any" required><br><br>
+
+            <label for="slp">Slope of Peak Exercise ST Segment:</label>
+            <input type="number" id="slp" required><br><br>
+
+            <label for="caa">Number of Major Vessels Colored by Fluoroscopy (0-3) :</label>
+            <input type="number" id="caa" required><br><br>
+
+            <label for="thall">Thalassemia (
+                0 = normal;
+                1 = fixed defect; 
+                2 = reversable defect
+                ) :</label>
+            <input type="number" id="thall" required><br><br>
+
+            <button type="submit">Submit</button>
+        </form>
+
+        <h2 id="result"></h2>
+        <footer>
+            <p>
+                Made by 
+                <span class="name">Dhiyanesh</span> & <span class="name">Mithuna</span>
+            </p>
+        </footer>
+    </div>
+    
+    
+    
+</body>
+<script src="app.js"></script>
+
+</html>
+
+
