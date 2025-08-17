@@ -1,0 +1,3024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ProteinGPT - AI-Powered Molecular Biology Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d1810 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px 0;
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #ff8c00, #ff6b47, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            text-shadow: 0 0 30px rgba(255, 140, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            color: #cccccc;
+            font-weight: 300;
+        }
+
+        .main-interface {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            min-height: 75vh;
+        }
+
+        .chat-panel {
+            background: linear-gradient(145deg, #1e1e1e, #262626);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            /* Set a fixed height relative to the viewport */
+            height: 80vh; 
+        }
+
+        .molecular-viewer {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        #molecularCanvas {
+            width: 100%;
+            height: 550px;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #0d1117, #161b22);
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .voice-button {
+            background: linear-gradient(135deg, #ff8c00, #ff6b47);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .voice-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.4);
+            background: linear-gradient(135deg, #ff9500, #ff7555);
+        }
+
+        .voice-button.active {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            animation: pulse 2s infinite;
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.4);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            /* REMOVE THE MARGIN-BOTTOM FROM THIS RULE */
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+            background: #ff6b47;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot.active {
+            background: #00ff88;
+            animation: blink 1s infinite;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .chat-messages {
+            flex: 1; /* This is key - it makes the div fill the available vertical space */
+            /* The 'height' property should be removed */
+            height: 300px;
+            overflow-y: auto; /* This makes it scroll when content overflows */
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 140, 0, 0.1);
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 140, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 140, 0, 0.5);
+        }
+
+        .message {
+            margin-bottom: 16px;
+            padding: 14px 18px;
+            border-radius: 16px;
+            position: relative;
+            animation: slideIn 0.3s ease;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message strong {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #ff8c00, #ff6b47);
+            color: white;
+            text-align: right;
+            margin-left: 40px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message {
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            margin-right: 40px;
+            border-bottom-left-radius: 4px;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ChatGPT-style Text Input */
+        .text-input-area {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255, 140, 0, 0.2);
+            padding-top: 20px;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            background: rgba(255, 140, 0, 0.05);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            border-radius: 20px;
+            padding: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .input-container:focus-within {
+            border-color: #ff8c00;
+            box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.1);
+        }
+
+        #textInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 1rem;
+            padding: 12px 16px;
+            outline: none;
+            font-family: inherit;
+            resize: none;
+            line-height: 1.4;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        #textInput::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #ff8c00, #ff6b47);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 18px;
+            box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .send-button:active {
+            transform: scale(0.95);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 8px;
+            background: rgba(255, 140, 0, 0.05);
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #ff8c00, #ff6b47);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* REPLACE the existing .protein-info CSS with this improved version */
+
+        .protein-info {
+            /* Move to bottom-right instead of top-right */
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 280px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            
+            /* Make it collapsible */
+            max-height: 200px;
+            overflow-y: auto;
+            
+            /* Smooth transition */
+            transition: all 0.3s ease;
+        }
+
+        /* Atom Legend Styling */
+        #atomLegend {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            z-index: 1000;
+            color: #cccccc;
+        }
+
+        /* Model Switcher Styling */
+        #modelSwitcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        #modelSwitcher .model-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            color: #cccccc;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+            width: 120px;
+            text-align: center;
+        }
+
+        #modelSwitcher .model-btn:hover {
+            background: rgba(255, 140, 0, 0.2);
+            color: #ff8c00;
+        }
+
+        #modelSwitcher .model-btn.active {
+            background: #ff8c00;
+            color: white;
+            border-color: #ff8c00;
+            font-weight: bold;
+        }
+
+        #atomLegend h4 {
+            margin: 0 0 10px 0;
+            color: #ff8c00;
+            font-size: 0.9rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 140, 0, 0.2);
+            padding-bottom: 5px;
+        }
+
+        #atomLegend ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #atomLegend li {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .color-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 1px solid #555;
+        }
+
+        .protein-info:hover {
+            max-height: 400px;
+            max-width: 320px;
+        }
+
+        .protein-info h3 {
+            color: #ff8c00;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(255, 140, 0, 0.3);
+            padding-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .protein-info p {
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: #cccccc;
+            line-height: 1.3;
+        }
+
+        .protein-info p strong {
+            color: #ff8c00;
+            font-size: 0.8rem;
+            display: inline-block;
+            min-width: 60px;
+        }
+
+        /* Add scrollbar styling */
+        .protein-info::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .protein-info::-webkit-scrollbar-track {
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 2px;
+        }
+
+        .protein-info::-webkit-scrollbar-thumb {
+            background: rgba(255, 140, 0, 0.3);
+            border-radius: 2px;
+        }
+
+        /* Fullscreen VR Mode */
+
+        /* Add this new rule to style the VR controls area */
+        .vr-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        body.vr-active .molecular-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            background: #000; /* Simple black background for VR */
+        }
+
+        body.vr-active #molecularCanvas {
+            border-radius: 0;
+        }
+
+        /* Hide other elements during VR */
+        body.vr-active .header,
+        body.vr-active .chat-panel,
+        body.vr-active .language-indicator {
+            display: none;
+        }
+
+        /* Make it more mobile-friendly */
+        @media (max-width: 768px) {
+            .protein-info {
+                position: static;
+                margin-top: 15px;
+                max-width: none;
+                max-height: none;
+                order: 3;
+            }
+            
+            .molecular-viewer {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            #molecularCanvas {
+                order: 1;
+            }
+            
+            .protein-info {
+                order: 2;
+            }
+        }
+
+        @media (display-mode: standalone) {
+            /* VR-specific styles */
+            body {
+                font-size: 1.2rem;
+                line-height: 1.4;
+            }
+            
+            .voice-button {
+                min-width: 44px;
+                min-height: 44px;
+                font-size: 1.2rem;
+            }
+            
+            .molecular-viewer {
+                height: 70vh;
+            }
+        }
+
+        /* Alternative: Side Panel Version (uncomment if you prefer left side) */
+        /*
+        .protein-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 250px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        */
+
+        .commands-help {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 140, 0, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 140, 0, 0.2);
+            
+            /* Add these lines to make it a scrollable box */
+            flex-shrink: 0; 
+            max-height: 140px; 
+            overflow-y: auto; 
+            /* ADD THIS LINE TO HIDE IT INITIALLY */
+            display: none;
+        }
+
+        .commands-help h3 {
+            margin-bottom: 15px;
+            color: #ff8c00;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .commands-help ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .commands-help li {
+            padding: 8px 0;
+            opacity: 0.8;
+            color: #cccccc;
+            transition: opacity 0.3s ease;
+            border-bottom: 1px solid rgba(255, 140, 0, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .commands-help li:last-child {
+            border-bottom: none;
+        }
+
+        .commands-help li:hover {
+            opacity: 1;
+            color: #ffffff;
+        }
+
+        .debug-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255, 140, 0, 0.1);
+        }
+
+        .debug-info strong {
+            color: #ff8c00;
+            display: inline;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 140, 0, 0.2);
+            border-radius: 50%;
+            border-top: 4px solid #ff8c00;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #cccccc;
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        /* Language Support Indicator */
+        .language-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 140, 0, 0.1);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #ff8c00;
+            z-index: 1000;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-interface {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .chat-messages {
+                height: 300px;
+            }
+            
+            #molecularCanvas {
+                height: 400px;
+            }
+            
+            .voice-controls {
+                flex-direction: column;
+            }
+            
+            .voice-button {
+                width: 100%;
+            }
+            
+            .protein-info {
+                position: static;
+                margin-top: 20px;
+                max-width: none;
+            }
+        }
+
+        /* Enhanced animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Improved focus states */
+        .voice-button:focus,
+        .send-button:focus,
+        .mode-btn:focus {
+            outline: 2px solid #ff8c00;
+            outline-offset: 2px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js"></script>
+    <script>
+    // Enable WebXR for better VR experience
+    if (navigator.xr) {
+        navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+            if (supported) {
+                console.log('WebXR VR supported!');
+            }
+        });
+    }
+    </script>
+</head>
+<body>
+    <div class="language-indicator" id="languageIndicator">
+        🌐 English
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🧬 ProteinGPT</h1>
+            <p>AI-Powered Voice & Text Molecular Biology Assistant</p>
+        </div>
+
+        <div class="main-interface">
+            <div class="chat-panel">
+                <div class="voice-controls">
+                    <button id="voiceButton" class="voice-button">🎤 Voice</button>
+                    <button id="testButton" class="voice-button">🧪 Test</button>
+                    <button id="clearChat" class="voice-button">🗑️ Clear</button>
+                    <button id="helpButton" class="voice-button" style="background: linear-gradient(135deg, #4a4a4a, #2a2a2a);">❓ Help</button>
+                </div>
+
+                <div class="vr-controls">
+                    <button id="vrButton" class="voice-button" style="background: linear-gradient(135deg, #8B00FF, #9932CC); min-width: 150px;">
+                        🥽 Enter VR
+                    </button>
+                    <span id="vrStatus" style="margin-left: 10px; color: #cccccc; font-size: 0.9rem;">
+                        Checking VR support...
+                    </span>
+
+                    <div class="status-indicator">
+                        <div id="statusDot" class="status-dot"></div>
+                        <span id="statusText">Ready to chat...</span>
+                    </div>
+                </div>
+
+
+                
+
+                <div id="chatMessages" class="chat-messages">
+                    <div class="message ai-message">
+                        <strong>ProteinGPT:</strong> Hello! I'm your advanced AI molecular biology assistant with 15+ proteins in my database! 
+                        <br><br>🎤 <strong>Voice Commands:</strong>
+                        <br>• "Show me p53" - Cancer guardian protein
+                        <br>• "Compare hemoglobin and myoglobin"
+                        <br>• "What diseases affect insulin?"
+                        <br><br>💬 <strong>Text Interface:</strong>
+                        <br>Type your questions below just like ChatGPT!
+                        <br><br>🌐 <strong>Languages:</strong> English, Hindi, Tamil
+                    </div>
+                </div>
+
+                <!-- ChatGPT-style Text Input -->
+                <div class="text-input-area">
+                    <div class="input-container">
+                        <textarea id="textInput" placeholder="Ask me about proteins... (e.g., 'explain insulin function')" rows="1"></textarea>
+                        <button id="sendButton" class="send-button" title="Send message">
+                            ➤
+                        </button>
+                    </div>
+                    <div class="mode-toggle">
+                        <button id="voiceModeBtn" class="mode-btn active">🎤 Voice</button>
+                        <button id="textModeBtn" class="mode-btn">💬 Text</button>
+                        <span style="margin-left: 8px; color: rgba(255,255,255,0.6); font-size: 0.8rem;">
+                            Voice mode active
+                        </span>
+                    </div>
+                </div>
+
+                <div class="commands-help">
+                    <h3>🎯 Enhanced Commands</h3>
+                    <ul>
+                        <li>🔹 "Show me [protein]" - Visualize any protein</li>
+                        <li>🔹 "What does [protein] do?" - Function details</li>
+                        <li>🔹 "Compare proteins" - Side-by-side analysis</li>
+                        <li>🔹 "Diseases of [protein]" - Medical connections</li>
+                        <li>🔹 "Drug targets for [protein]" - Therapeutic info</li>
+                        <li>🔹 "List all proteins" - Database overview</li>
+                        <li>🔹 "Random protein" - Discover new proteins</li>
+                        <li>🔹 "Quiz mode" - Test your knowledge</li>
+                        <li>🔹 "Switch to Hindi/Tamil" - Language change</li>
+                        <li>🔹 "Protein folding basics" - Learn concepts</li>
+                    </ul>
+                    
+                    <div id="debugInfo" class="debug-info">
+                        <strong>🔧 System Status:</strong><br>
+                        <span id="browserInfo">Checking browser...</span><br>
+                        <span id="microphoneInfo">Checking microphone...</span><br>
+                        <span id="threeJSInfo">Checking 3D support...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="molecular-viewer">
+                <div id="molecularCanvas"></div>
+                
+                <div id="atomLegend">
+                    <h4>Atom Legend (CPK)</h4>
+                    <ul>
+                        <li><span class="color-dot" style="background-color: #111111;"></span> Carbon (C)</li>
+                        <li><span class="color-dot" style="background-color: #ff2222;"></span> Oxygen (O)</li>
+                        <li><span class="color-dot" style="background-color: #2222ff;"></span> Nitrogen (N)</li>
+                        <li><span class="color-dot" style="background-color: #ffff33;"></span> Sulfur (S)</li>
+                        <li><span class="color-dot" style="background-color: #ffffff;"></span> Hydrogen (H)</li>
+                    </ul>
+                </div>
+
+                <div id="modelSwitcher">
+                    <button class="model-btn" data-model="ball_and_stick">Ball & Stick</button>
+                    <button class="model-btn" data-model="space_filling">Space-filling</button>
+                    <button class="model-btn active" data-model="cartoon">Cartoon</button>
+                    <button class="model-btn" data-model="backbone">Backbone</button>
+                </div>
+                
+                <div class="protein-info" id="proteinInfo" style="display: none;">
+                    <h3 id="proteinName">Protein Name</h3>
+                    <p><strong>Function:</strong> <span id="proteinFunction"></span></p>
+                    <p><strong>Structure:</strong> <span id="proteinStructure"></span></p>
+                    <p><strong>Location:</strong> <span id="proteinLocation"></span></p>
+                    <p><strong>Diseases:</strong> <span id="proteinDiseases"></span></p>
+                    <p><strong>Drugs:</strong> <span id="proteinDrugs"></span></p>
+                </div>
+
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <p>Loading 3D Model...</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js for 3D molecular visualization -->
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PDBLoader.js"></script>
+
+    <script>
+        // Global variables
+        let recognition;
+        let isListening = false;
+        let currentProtein = null;
+        let currentLanguage = 'en-US';
+        let currentInputMode = 'voice';
+
+        // NEW: Add these state variables
+        let currentPdbData = null;
+        let currentViewModel = 'cartoon';
+        // XR/VR variables
+        let xrSession = null;
+        let isVRMode = false;
+        let vrButton;
+        let controller1, controller2;
+
+        // EXPANDED Protein Knowledge Base - 15+ Proteins
+        const proteinDatabase = {
+            
+            'hemoglobin': {
+                name: 'Hemoglobin',
+                function: 'Carries oxygen from lungs to body tissues and returns carbon dioxide back to lungs',
+                structure: 'Four protein subunits (2 alpha, 2 beta) each containing a heme group with iron',
+                diseases: 'Mutations cause sickle cell anemia and thalassemia',
+                pdbId: '1A3N',
+                color: '#ff4757',
+                molecularWeight: '64,500 Da',
+                location: 'Red blood cells',
+                classification: 'Transport protein',
+                diseases_detail: 'Sickle cell anemia, Thalassemia, Methemoglobinemia, Hemoglobinopathies',
+                drug_targets: 'Hydroxyurea, Voxelotor, L-glutamine, Crizanlizumab',
+                research_areas: 'Oxygen transport, Blood disorders, Evolutionary biology, Gene therapy'
+            },
+            'insulin': {
+                name: 'Insulin',
+                function: 'Regulates blood glucose levels by facilitating cellular glucose uptake',
+                structure: 'Two protein chains (A chain: 21 amino acids, B chain: 30 amino acids) connected by disulfide bonds',
+                diseases: 'Deficiency causes diabetes mellitus',
+                pdbId: '1MSO',
+                color: '#3742fa',
+                molecularWeight: '5,808 Da',
+                location: 'Pancreatic beta cells',
+                classification: 'Hormone',
+                diseases_detail: 'Type 1 diabetes, Type 2 diabetes, Insulin resistance, MODY diabetes',
+                drug_targets: 'Synthetic insulin analogs, Metformin, GLP-1 agonists, SGLT2 inhibitors',
+                research_areas: 'Diabetes treatment, Metabolic disorders, Drug delivery, Artificial pancreas'
+            },
+            'lysozyme': {
+                name: 'Lysozyme',
+                function: 'Breaks down bacterial cell walls by cleaving peptidoglycan',
+                structure: 'Single chain protein with 129 amino acids, contains 4 disulfide bonds',
+                diseases: 'Found in tears, saliva, and mucus as natural antibiotic',
+                pdbId: '1LYZ',
+                color: '#2ed573',
+                molecularWeight: '14,307 Da',
+                location: 'Tears, saliva, mucus, egg whites',
+                classification: 'Enzyme (hydrolase)',
+                diseases_detail: 'Lysozyme deficiency, Increased bacterial infections, Amyloidosis',
+                drug_targets: 'Antimicrobial research, Natural preservatives, Wound healing agents',
+                research_areas: 'Innate immunity, Antimicrobial peptides, Food preservation, Biofilms'
+            },
+            'myoglobin': {
+                name: 'Myoglobin',
+                function: 'Stores oxygen in muscle tissues and facilitates oxygen diffusion',
+                structure: 'Single polypeptide chain with 153 amino acids and one heme group',
+                diseases: 'Elevated levels indicate muscle damage',
+                pdbId: '1MBN',
+                color: '#a55eea',
+                molecularWeight: '17,699 Da',
+                location: 'Skeletal and cardiac muscle',
+                classification: 'Storage protein',
+                diseases_detail: 'Rhabdomyolysis, Myocardial infarction, Muscular dystrophy, Exercise-induced muscle damage',
+                drug_targets: 'Cardiac biomarker, Creatine kinase inhibitors, Cardioprotective agents',
+                research_areas: 'Muscle physiology, Oxygen storage, Exercise science, Cardiac biomarkers'
+            },
+            'p53': {
+                name: 'p53 Tumor Suppressor',
+                function: 'Guardian of the genome - prevents cancer by controlling cell cycle and apoptosis',
+                structure: 'Transcription factor with DNA-binding domain, tetramerization domain',
+                diseases: 'Mutations found in 50% of human cancers',
+                pdbId: '1TUP',
+                color: '#ff3838',
+                molecularWeight: '53,000 Da',
+                location: 'Cell nucleus',
+                classification: 'Transcription factor',
+                diseases_detail: 'Li-Fraumeni syndrome, Breast cancer, Lung cancer, Colon cancer, Glioblastoma',
+                drug_targets: 'MDM2 inhibitors, p53 reactivation compounds, PARP inhibitors, Immunotherapy',
+                research_areas: 'Cancer biology, Cell cycle control, Tumor suppression, Gene therapy, Oncology'
+            },
+            'collagen': {
+                name: 'Collagen',
+                function: 'Provides structural support and strength to tissues',
+                structure: 'Triple helix of three polypeptide chains with glycine-proline-hydroxyproline repeats',
+                diseases: 'Defects cause connective tissue disorders',
+                pdbId: '1CAG',
+                color: '#f39c12',
+                molecularWeight: '300,000 Da',
+                location: 'Skin, bones, tendons, blood vessels',
+                classification: 'Structural protein',
+                diseases_detail: 'Ehlers-Danlos syndrome, Osteogenesis imperfecta, Scurvy, Arthritis, Aging',
+                drug_targets: 'Collagen supplements, Anti-aging treatments, Wound healing therapeutics, Matrix metalloproteinase inhibitors',
+                research_areas: 'Tissue engineering, Aging, Wound healing, Regenerative medicine, Biomaterials'
+            },
+            'albumin': {
+                name: 'Serum Albumin',
+                function: 'Maintains blood osmotic pressure and transports various molecules',
+                structure: 'Single chain protein with three homologous domains',
+                diseases: 'Low levels indicate liver or kidney disease',
+                pdbId: '1AO6',
+                color: '#00d2d3',
+                molecularWeight: '66,500 Da',
+                location: 'Blood plasma',
+                classification: 'Transport protein',
+                diseases_detail: 'Hypoalbuminemia, Liver disease, Kidney disease, Malnutrition, Sepsis',
+                drug_targets: 'Drug delivery vehicle, Plasma expander, Albumin replacement therapy',
+                research_areas: 'Drug delivery, Liver function, Pharmacokinetics, Nutrition, Critical care'
+            },
+            'antibody': {
+                name: 'Immunoglobulin G (IgG)',
+                function: 'Recognizes and neutralizes foreign antigens like bacteria and viruses',
+                structure: 'Y-shaped protein with heavy and light chains, variable and constant regions',
+                diseases: 'Deficiency causes immunodeficiency',
+                pdbId: '1IGT',
+                color: '#ff6348',
+                molecularWeight: '150,000 Da',
+                location: 'Blood, lymph, tissues',
+                classification: 'Immune protein',
+                diseases_detail: 'Immunodeficiency, Autoimmune diseases, Allergies, Multiple myeloma, Hypergammaglobulinemia',
+                drug_targets: 'Monoclonal antibody therapeutics, Immunotherapy, CAR-T cell therapy, Checkpoint inhibitors',
+                research_areas: 'Immunology, Vaccine development, Cancer therapy, Autoimmune diseases, Transplantation'
+            },
+            'actin': {
+                name: 'Actin',
+                function: 'Forms cytoskeleton filaments enabling cell movement and shape',
+                structure: 'Globular protein that polymerizes into filamentous structures',
+                diseases: 'Mutations affect cell mobility and development',
+                pdbId: '1ATN',
+                color: '#e056fd',
+                molecularWeight: '42,000 Da',
+                location: 'Cytoplasm of all cells',
+                classification: 'Cytoskeletal protein',
+                diseases_detail: 'Cardiomyopathy, Muscular dystrophy, Deafness, Nemaline myopathy, Baraitser-Winter syndrome',
+                drug_targets: 'Cytoskeleton stabilizers, Anti-cancer drugs, Phalloidin, Cytochalasin D',
+                research_areas: 'Cell biology, Cancer metastasis, Drug targets, Muscle contraction, Cell motility'
+            },
+            'catalase': {
+                name: 'Catalase',
+                function: 'Breaks down hydrogen peroxide into water and oxygen, protecting cells from damage',
+                structure: 'Tetrameric enzyme with heme groups, highly efficient catalyst',
+                diseases: 'Deficiency causes oxidative stress',
+                pdbId: '1DGH',
+                color: '#32ff7e',
+                molecularWeight: '240,000 Da',
+                location: 'Peroxisomes in liver, kidney cells',
+                classification: 'Enzyme (oxidoreductase)',
+                diseases_detail: 'Acatalasemia, Oxidative stress disorders, Diabetes complications, Aging-related diseases',
+                drug_targets: 'Antioxidant therapy, Peroxide scavengers, Anti-aging treatments, Catalase mimetics',
+                research_areas: 'Oxidative stress, Aging, Antioxidant defense, Diabetes research, Longevity'
+            },
+            'amylase': {
+                name: 'Alpha-Amylase',
+                function: 'Breaks down starch into simple sugars during digestion',
+                structure: 'Single domain enzyme with calcium-binding sites',
+                diseases: 'Elevated levels indicate pancreatitis',
+                pdbId: '1HNY',
+                color: '#ffa502',
+                molecularWeight: '55,000 Da',
+                location: 'Pancreas, salivary glands',
+                classification: 'Enzyme (hydrolase)',
+                diseases_detail: 'Pancreatitis, Salivary gland disorders, Diabetes, Digestive enzyme deficiency',
+                drug_targets: 'Alpha-glucosidase inhibitors, Digestive enzyme supplements, Acarbose',
+                research_areas: 'Digestive physiology, Diabetes research, Enzyme engineering, Biotechnology'
+            },
+            'elastin': {
+                name: 'Elastin',
+                function: 'Provides elasticity and recoil to tissues like skin, lungs, and arteries',
+                structure: 'Cross-linked protein network with hydrophobic domains',
+                diseases: 'Defects cause skin aging and arterial diseases',
+                pdbId: '2GYP',
+                color: '#ff7675',
+                molecularWeight: '65,000 Da',
+                location: 'Skin, lungs, arteries, elastic ligaments',
+                classification: 'Structural protein',
+                diseases_detail: 'Cutis laxa, Emphysema, Arterial stenosis, Williams syndrome, Supravalvular aortic stenosis',
+                drug_targets: 'Anti-aging treatments, Elastin supplements, Arterial repair therapies, Elastase inhibitors',
+                research_areas: 'Aging research, Cardiovascular disease, Pulmonary medicine, Dermatology'
+            },
+            'ferritin': {
+                name: 'Ferritin',
+                function: 'Stores and releases iron in a controlled manner',
+                structure: 'Hollow spherical shell composed of 24 protein subunits',
+                diseases: 'Abnormal levels indicate iron metabolism disorders',
+                pdbId: '2FHA',
+                color: '#d63031',
+                molecularWeight: '474,000 Da',
+                location: 'Liver, spleen, bone marrow, all cells',
+                classification: 'Storage protein',
+                diseases_detail: 'Iron deficiency anemia, Hemochromatosis, Ferritin syndrome, Hyperferritinemia',
+                drug_targets: 'Iron supplements, Iron chelation therapy, Ferritin nanocages for drug delivery',
+                research_areas: 'Iron metabolism, Anemia research, Nanotechnology, Drug delivery, Hematology'
+            },
+            'keratin': {
+                name: 'Keratin',
+                function: 'Provides structural strength to hair, nails, and skin',
+                structure: 'Fibrous protein with alpha-helical and beta-sheet regions',
+                diseases: 'Mutations cause skin and hair disorders',
+                pdbId: '3TNU',
+                color: '#fdcb6e',
+                molecularWeight: '65,000 Da',
+                location: 'Hair, nails, skin, feathers',
+                classification: 'Structural protein',
+                diseases_detail: 'Epidermolysis bullosa, Keratoderma, Hair disorders, Nail dystrophy, Ichthyosis',
+                drug_targets: 'Keratin treatments, Hair strengthening therapies, Skin barrier repair',
+                research_areas: 'Dermatology, Hair biology, Skin barrier function, Cosmetics, Biomaterials'
+            },
+            'fibrinogen': {
+                name: 'Fibrinogen',
+                function: 'Converts to fibrin during blood clotting to form blood clots',
+                structure: 'Large glycoprotein with three pairs of polypeptide chains',
+                diseases: 'Deficiency causes bleeding disorders',
+                pdbId: '3GHG',
+                color: '#6c5ce7',
+                molecularWeight: '340,000 Da',
+                location: 'Blood plasma',
+                classification: 'Clotting factor',
+                diseases_detail: 'Afibrinogenemia, Dysfibrinogenemia, Thrombosis, Bleeding disorders, Stroke',
+                drug_targets: 'Thrombolytic agents, Anticoagulants, Fibrinogen concentrate, Factor replacement',
+                research_areas: 'Hemostasis, Thrombosis, Cardiovascular disease, Bleeding disorders, Coagulation'
+            }
+        };
+
+        // 1. ADD FLUOROPHORE DATABASE (Replace/extend your proteinDatabase)
+        // Add this AFTER your existing proteinDatabase object
+
+        const fluorophoreDatabase = {
+            'gfp': {
+                name: 'Green Fluorescent Protein',
+                function: 'Emits green light when excited by blue light - revolutionary biological marker',
+                structure: 'Beta-barrel with central chromophore formed by cyclization of amino acids',
+                excitationPeak: 488,
+                emissionPeak: 509,
+                quantumYield: 0.79,
+                color: '#00ff00',
+                pdbId: '1EMA',
+                molecularWeight: '26,900 Da',
+                location: 'Cytoplasm, can be targeted to specific organelles',
+                classification: 'Fluorescent protein',
+                diseases_detail: 'Used as biomarker for cancer research, protein localization studies',
+                drug_targets: 'Fluorescent protein engineering, optogenetics, biosensors',
+                research_areas: 'Cell biology, neuroscience, cancer research, protein engineering',
+                // Fluorescence-specific properties
+                extinctionCoefficient: 55000,
+                brightness: 43.45, // quantum yield × extinction coefficient
+                maturationTime: '2-4 hours',
+                photobleaching: 'Moderate',
+                applications: ['Protein tagging', 'Cell tracking', 'Gene expression'],
+                discovered: 'Aequorea victoria jellyfish, 1961',
+                nobelPrize: '2008 - Osamu Shimomura, Martin Chalfie, Roger Tsien'
+            },
+            'rfp': {
+                name: 'Red Fluorescent Protein',
+                function: 'Emits red light - ideal for multi-color imaging and FRET acceptor',
+                structure: 'Modified GFP structure with extended conjugation system',
+                excitationPeak: 558,
+                emissionPeak: 583,
+                quantumYield: 0.17,
+                color: '#ff0000',
+                pdbId: '1G7K',
+                molecularWeight: '26,700 Da',
+                location: 'Cytoplasm, nucleus, membranes',
+                classification: 'Fluorescent protein',
+                diseases_detail: 'Cancer cell tracking, inflammation studies, neural activity mapping',
+                drug_targets: 'Drug delivery tracking, therapeutic protein localization',
+                research_areas: 'Multi-color imaging, FRET studies, live cell imaging',
+                extinctionCoefficient: 46000,
+                brightness: 7.82,
+                maturationTime: '1-2 hours',
+                photobleaching: 'High',
+                applications: ['FRET acceptor', 'Multi-color imaging', 'Protein interactions'],
+                discovered: 'Discosoma coral, 1999',
+                advantages: 'Fast maturation, bright signal'
+            },
+            'cfp': {
+                name: 'Cyan Fluorescent Protein',
+                function: 'Emits cyan light - perfect FRET donor for studying protein interactions',
+                structure: 'GFP variant with Tyr66Trp mutation creating cyan emission',
+                excitationPeak: 434,
+                emissionPeak: 477,
+                quantumYield: 0.40,
+                color: '#00ffff',
+                pdbId: '1OXD',
+                molecularWeight: '26,900 Da',
+                location: 'Cytoplasm, can be targeted anywhere',
+                classification: 'Fluorescent protein',
+                diseases_detail: 'Protein-protein interaction studies, signaling pathway analysis',
+                drug_targets: 'Drug-target interaction studies, cellular pathway mapping',
+                research_areas: 'FRET microscopy, protein interactions, signal transduction',
+                extinctionCoefficient: 32500,
+                brightness: 13.0,
+                maturationTime: '2-3 hours',
+                photobleaching: 'Moderate',
+                applications: ['FRET donor', 'Protein interactions', 'Biosensors'],
+                discovered: 'Engineered from GFP, 1996',
+                fretPartner: 'YFP (Yellow Fluorescent Protein)'
+            },
+            'yfp': {
+                name: 'Yellow Fluorescent Protein',
+                function: 'Emits yellow light - ideal FRET acceptor and pH sensor',
+                structure: 'GFP variant with Thr203Tyr mutation shifting emission to yellow',
+                excitationPeak: 514,
+                emissionPeak: 527,
+                quantumYield: 0.61,
+                color: '#ffff00',
+                pdbId: '1MYW',
+                molecularWeight: '26,900 Da',
+                location: 'Cytoplasm, organelles, membranes',
+                classification: 'Fluorescent protein',
+                diseases_detail: 'pH sensing in cancer cells, metabolic studies',
+                drug_targets: 'Drug efficacy monitoring, cellular metabolism tracking',
+                research_areas: 'FRET microscopy, pH sensing, metabolic studies',
+                extinctionCoefficient: 83400,
+                brightness: 50.87,
+                maturationTime: '1-2 hours',
+                photobleaching: 'Low',
+                applications: ['FRET acceptor', 'pH sensing', 'Metabolic studies'],
+                discovered: 'Engineered from GFP, 1996',
+                fretPartner: 'CFP (Cyan Fluorescent Protein)'
+            },
+            'dapi': {
+                name: 'DAPI (DNA Stain)',
+                function: 'Binds to DNA and emits blue fluorescence - nuclear staining',
+                structure: 'Small molecule that intercalates into DNA minor groove',
+                excitationPeak: 358,
+                emissionPeak: 461,
+                quantumYield: 0.6,
+                color: '#0000ff',
+                pdbId: 'N/A',
+                molecularWeight: '350 Da',
+                location: 'Cell nucleus (DNA)',
+                classification: 'Fluorescent dye',
+                diseases_detail: 'Nuclear morphology in cancer, cell cycle studies',
+                drug_targets: 'DNA damage assessment, cell death studies',
+                research_areas: 'Nuclear imaging, cell cycle, DNA damage',
+                extinctionCoefficient: 27000,
+                brightness: 16.2,
+                maturationTime: 'Instant',
+                photobleaching: 'Very low',
+                applications: ['Nuclear staining', 'Cell counting', 'DNA visualization'],
+                discovered: 'Synthetic dye, 1975',
+                toxicity: 'Low at imaging concentrations'
+            },
+            'rhodamine': {
+                name: 'Rhodamine B',
+                function: 'Bright red fluorescent dye - excellent for live cell imaging',
+                structure: 'Xanthene dye with high quantum yield and brightness',
+                excitationPeak: 540,
+                emissionPeak: 625,
+                quantumYield: 0.65,
+                color: '#ff69b4',
+                pdbId: 'N/A',
+                molecularWeight: '479 Da',
+                location: 'Cytoplasm, membranes',
+                classification: 'Fluorescent dye',
+                diseases_detail: 'Cell viability studies, membrane dynamics',
+                drug_targets: 'Drug distribution tracking, membrane transport',
+                research_areas: 'Live cell imaging, membrane dynamics, drug delivery',
+                extinctionCoefficient: 106000,
+                brightness: 68.9,
+                maturationTime: 'Instant',
+                photobleaching: 'Moderate',
+                applications: ['Live cell imaging', 'Membrane staining', 'Drug tracking'],
+                discovered: 'Synthetic dye, 1887',
+                advantages: 'Very bright, stable in live cells'
+            }
+        };
+
+
+        // Enhanced multilingual support
+        const languageResponses = {
+            'en': {
+                'hemoglobin': 'Hemoglobin carries oxygen from lungs to body tissues and returns carbon dioxide back to lungs',
+                'insulin': 'Insulin regulates blood glucose levels by facilitating cellular glucose uptake',
+                'lysozyme': 'Lysozyme breaks down bacterial cell walls by cleaving peptidoglycan',
+                'myoglobin': 'Myoglobin stores oxygen in muscle tissues and facilitates oxygen diffusion',
+                'p53': 'p53 is the guardian of the genome - prevents cancer by controlling cell cycle and apoptosis',
+                'collagen': 'Collagen provides structural support and strength to tissues',
+                'albumin': 'Albumin maintains blood osmotic pressure and transports various molecules',
+                'antibody': 'Antibodies recognize and neutralize foreign antigens like bacteria and viruses',
+                'actin': 'Actin forms cytoskeleton filaments enabling cell movement and shape',
+                'catalase': 'Catalase breaks down hydrogen peroxide into water and oxygen, protecting cells from damage',
+                'language_switched': 'Language switched to English. You can now speak in English.',
+                'listening': 'Listening... Speak now!',
+                'ready': 'Ready to chat...'
+            },
+            'hi': {
+                'hemoglobin': 'हीमोग्लोबिन ऑक्सीजन को फेफड़ों से शरीर के ऊतकों तक पहुंचाता है और कार्बन डाइऑक्साइड वापस लेकर आता है',
+                'insulin': 'इंसुलिन रक्त शर्करा के स्तर को नियंत्रित करता है और कोशिकाओं में ग्लूकोज के अवशोषण को सुविधाजनक बनाता है',
+                'lysozyme': 'लाइसोजाइम पेप्टिडोग्लाइकन को काटकर बैक्टीरिया की कोशिका दीवारों को तोड़ता है',
+                'myoglobin': 'माइयोग्लोबिन मांसपेशियों के ऊतकों में ऑक्सीजन संग्रहीत करता है और ऑक्सीजन के प्रसार को सुविधाजनक बनाता है',
+                'p53': 'p53 जीनोम का संरक्षक है - कोशिका चक्र और एपोप्टोसिस को नियंत्रित करके कैंसर को रोकता है',
+                'collagen': 'कोलेजन ऊतकों को संरचनात्मक सहारा और मजबूती प्रदान करता है',
+                'albumin': 'एल्ब्यूमिन रक्त के ऑस्मोटिक दबाव को बनाए रखता है और विभिन्न अणुओं का परिवहन करता है',
+                'antibody': 'एंटीबॉडी बैक्टीरिया और वायरस जैसे विदेशी एंटीजन को पहचानती और बेअसर करती है',
+                'actin': 'एक्टिन साइटोस्केलेटन फिलामेंट्स बनाता है जो कोशिका की गति और आकार को सक्षम बनाता है',
+                'catalase': 'कैटेलेज हाइड्रोजन पेरोक्साइड को पानी और ऑक्सीजन में तोड़ता है, कोशिकाओं को नुकसान से बचाता है',
+                'language_switched': 'भाषा हिंदी में बदल दी गई। अब आप हिंदी में बोल सकते हैं।',
+                'listening': 'सुन रहे हैं... बोलिए!',
+                'ready': 'चैट करने के लिए तैयार...'
+            },
+            'ta': {
+                'hemoglobin': 'ஹீமோகுளோபின் நுரையீரலில் இருந்து உடல் திசுக்களுக்கு ஆக்ஸிஜனை கொண்டு செல்கிறது மற்றும் கார்பன் டை ஆக்சைடை திரும்ப கொண்டு வருகிறது',
+                'insulin': 'இன்சுலின் செல்களில் குளுக்கோஸ் உறிஞ்சுதலை எளிதாக்குவதன் மூலம் இரத்த குளுக்கோஸ் அளவைக் கட்டுப்படுத்துகிறது',
+                'lysozyme': 'லைசோசைம் பெப்டிடோகிளைகானை வெட்டுவதன் மூலம் பாக்டீரியா உயிரணு சுவர்களை உடைக்கிறது',
+                'myoglobin': 'மயோகுளோபின் தசை திசுக்களில் ஆக்ஸிஜனை சேமித்து ஆக்ஸிஜன் பரவலை எளிதாக்குகிறது',
+                'p53': 'p53 மரபணுவின் காவலர் - உயிரணு சுழற்சி மற்றும் அபோப்டோசிஸைக் கட்டுப்படுத்தி புற்றுநோயைத் தடுக்கிறது',
+                'collagen': 'கொலாஜன் திசுக்களுக்கு கட்டமைப்பு ஆதரவு மற்றும் வலிமையை வழங்குகிறது',
+                'albumin': 'அல்புமின் இரத்தத்தின் ஆஸ்மோடிக் அழுத்தத்தை பராமரிக்கிறது மற்றும் பல்வேறு மூலக்கூறுகளை கொண்டு செல்கிறது',
+                'antibody': 'ஆன்டிபாடிகள் பாக்டீரியா மற்றும் வைரஸ் போன்ற வெளிநாட்டு ஆன்டிஜன்களை அடையாளம் கண்டு நடுநிலையாக்குகின்றன',
+                'actin': 'ஆக்டின் சைட்டோஸ்கெலட்டன் இழைகளை உருவாக்கி உயிரணு இயக்கம் மற்றும் வடிவத்தை சாத்தியமாக்குகிறது',
+                'catalase': 'கேட்டலேஸ் ஹைட்ரஜன் பெராக்சைடை நீர் மற்றும் ஆக்ஸிஜனாக உடைத்து உயிரணுகளை சேதத்திலிருந்து பாதுகாக்கிறது',
+                'language_switched': 'மொழி தமிழுக்கு மாற்றப்பட்டது। இப்போது நீங்கள் தமிழில் பேசலாம்.',
+                'listening': 'கேட்டுக்கொண்டிருக்கிறேன்... பேசுங்கள்!',
+                'ready': 'அரட்டைக்கு தயார்...'
+            }
+        };
+
+        // Initialize the application
+        function initializeApp() {
+            checkBrowserCompatibility();
+            initializeSpeechRecognition();
+            initializeMolecularViewer();
+            setupEventListeners();
+            setupTextInput();
+            initializeWebXR(); // NEW: Initialize VR support
+            addMessage('ai', '✅ ProteinGPT Enhanced with VR support! Click "Enter VR" to start the immersive experience!');
+        }
+
+        function checkBrowserCompatibility() {
+            const browserInfo = document.getElementById('browserInfo');
+            const microphoneInfo = document.getElementById('microphoneInfo');
+            const threeJSInfo = document.getElementById('threeJSInfo');
+            
+            // Check browser
+            const userAgent = navigator.userAgent;
+            let browserName = 'Unknown';
+            if (userAgent.includes('Chrome')) browserName = 'Chrome ✅';
+            else if (userAgent.includes('Edge')) browserName = 'Edge ✅';
+            else if (userAgent.includes('Firefox')) browserName = 'Firefox ❌';
+            else if (userAgent.includes('Safari')) browserName = 'Safari ❌';
+            
+            browserInfo.textContent = `Browser: ${browserName}`;
+            
+            // Check speech recognition support
+            const speechSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+            
+            // Check microphone
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function(stream) {
+                        microphoneInfo.textContent = 'Microphone: Available ✅';
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(function(error) {
+                        microphoneInfo.textContent = `Microphone: Error ❌`;
+                    });
+            } else {
+                microphoneInfo.textContent = 'Microphone: Not supported ❌';
+            }
+            
+            // Check Three.js support
+            if (typeof THREE !== 'undefined') {
+                threeJSInfo.textContent = '3D Graphics: Supported ✅';
+            } else {
+                threeJSInfo.textContent = '3D Graphics: Error ❌';
+            }
+            
+            if (!speechSupported) {
+                addMessage('ai', '❌ Speech recognition not supported. Text input is available.');
+            }
+        }
+
+        function initializeSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                addMessage('ai', '❌ Speech recognition not supported. Please use text input.');
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = currentLanguage;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function() {
+                isListening = true;
+                updateStatus(true, getCurrentText('listening'));
+                document.getElementById('voiceButton').classList.add('active');
+                document.getElementById('voiceButton').textContent = '🛑 Stop';
+            };
+
+            recognition.onresult = function(event) {
+                let finalTranscript = '';
+                let interimTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                if (interimTranscript) {
+                    updateStatus(true, `🎤 Hearing: "${interimTranscript}"`);
+                }
+
+                if (finalTranscript.trim()) {
+                    processCommand(finalTranscript.trim());
+                    
+                    // In VR mode, automatically restart listening
+                    if (isVRMode) {
+                        setTimeout(() => {
+                            if (!isListening) {
+                                try {
+                                    recognition.start();
+                                } catch (e) {
+                                    console.log('Voice recognition restart failed');
+                                }
+                            }
+                        }, 1000);
+                    }
+                }
+            };
+
+            recognition.onerror = function(event) {
+                isListening = false;
+                document.getElementById('voiceButton').classList.remove('active');
+                document.getElementById('voiceButton').textContent = '🎤 Voice';
+                
+                let errorMessage = '';
+                switch(event.error) {
+                    case 'not-allowed':
+                        errorMessage = '❌ Microphone access denied. Please allow microphone permission.';
+                        updateStatus(false, 'Microphone permission denied');
+                        break;
+                    case 'no-speech':
+                        errorMessage = '🔇 No speech detected. Try speaking louder.';
+                        updateStatus(false, 'No speech detected');
+                        break;
+                    default:
+                        errorMessage = `❌ Speech error: ${event.error}`;
+                        updateStatus(false, `Error: ${event.error}`);
+                }
+                
+                if (!isVRMode) {
+                    addMessage('ai', errorMessage);
+                }
+                
+                // In VR mode, try to restart automatically
+                if (isVRMode && event.error !== 'not-allowed') {
+                    setTimeout(() => {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.log('Auto-restart failed');
+                        }
+                    }, 2000);
+                }
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+                updateStatus(false, getCurrentText('ready'));
+                document.getElementById('voiceButton').classList.remove('active');
+                document.getElementById('voiceButton').textContent = '🎤 Voice';
+                
+                // In VR mode, automatically restart voice recognition
+                if (isVRMode) {
+                    setTimeout(() => {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.log('Voice recognition auto-restart failed');
+                        }
+                    }, 500);
+                }
+            };
+        }
+
+        // Setup text input functionality
+        function setupTextInput() {
+            const textInput = document.getElementById('textInput');
+            const sendButton = document.getElementById('sendButton');
+            const voiceModeBtn = document.getElementById('voiceModeBtn');
+            const textModeBtn = document.getElementById('textModeBtn');
+
+            // Auto-resize textarea
+            textInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                
+                // Enable/disable send button
+                sendButton.disabled = !this.value.trim();
+            });
+
+            // Send on Enter (Shift+Enter for new line)
+            textInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Send button click
+            sendButton.addEventListener('click', sendMessage);
+
+            // Mode switching
+            voiceModeBtn.addEventListener('click', () => switchMode('voice'));
+            textModeBtn.addEventListener('click', () => switchMode('text'));
+
+            function sendMessage() {
+                const message = textInput.value.trim();
+                if (!message) return;
+
+                // Process the message
+                processCommand(message);
+                
+                // Clear input
+                textInput.value = '';
+                textInput.style.height = 'auto';
+                sendButton.disabled = true;
+            }
+
+            function switchMode(mode) {
+                currentInputMode = mode;
+                
+                voiceModeBtn.classList.toggle('active', mode === 'voice');
+                textModeBtn.classList.toggle('active', mode === 'text');
+                
+                const indicator = document.querySelector('.mode-toggle span');
+                indicator.textContent = mode === 'voice' ? 'Voice mode active' : 'Text mode active';
+                
+                if (mode === 'text') {
+                    textInput.focus();
+                }
+            }
+        }
+
+        // Molecular Viewer Setup
+        let scene, camera, renderer, proteinGroup;
+        
+        function initializeMolecularViewer() {
+            const canvas = document.getElementById('molecularCanvas');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            
+            // IMPORTANT: Enable XR support in renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setClearColor(0x0d1117, 1);
+            renderer.xr.enabled = true; // Enable WebXR
+            
+            canvas.appendChild(renderer.domElement);
+            
+            // Enhanced lighting for VR
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xff8c00, 1.2);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            const pointLight = new THREE.PointLight(0xff6b47, 0.7);
+            pointLight.position.set(-10, -10, -5);
+            scene.add(pointLight);
+            
+            proteinGroup = new THREE.Group();
+            scene.add(proteinGroup);
+            
+            camera.position.z = 15;
+            
+            setupViewerControls();
+            
+            // Use setAnimationLoop for VR compatibility
+            renderer.setAnimationLoop(animate);
+            
+            // Load default protein
+            setTimeout(() => {
+                loadProtein('hemoglobin');
+            }, 1000);
+        }
+                
+        function setupViewerControls() {
+            const canvas = renderer.domElement;
+            let isMouseDown = false;
+            let mouseX = 0, mouseY = 0;
+            
+            canvas.addEventListener('mousedown', (event) => {
+                isMouseDown = true;
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                isMouseDown = false;
+            });
+            
+            canvas.addEventListener('mousemove', (event) => {
+                if (!isMouseDown) return;
+                
+                const deltaX = event.clientX - mouseX;
+                const deltaY = event.clientY - mouseY;
+                
+                proteinGroup.rotation.y += deltaX * 0.01;
+                proteinGroup.rotation.x += deltaY * 0.01;
+                
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
+            
+            canvas.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                camera.position.z += event.deltaY * 0.01;
+                camera.position.z = Math.max(5, Math.min(50, camera.position.z));
+            });
+        }
+        
+        function initializeWebXR() {
+            vrButton = document.getElementById('vrButton');
+            const vrStatus = document.getElementById('vrStatus');
+            
+            if (navigator.xr) {
+                navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+                    if (supported) {
+                        vrStatus.textContent = 'VR Ready! 🥽';
+                        vrButton.disabled = false;
+                        vrButton.onclick = toggleVR;
+                    } else {
+                        vrStatus.textContent = 'VR not supported on this device 😞';
+                        vrButton.disabled = true;
+                        vrButton.style.opacity = '0.5';
+                    }
+                }).catch(() => {
+                    vrStatus.textContent = 'VR not available 📱';
+                    vrButton.disabled = true;
+                    vrButton.style.opacity = '0.5';
+                });
+            } else {
+                vrStatus.textContent = 'WebXR not supported 📱';
+                vrButton.disabled = true;
+                vrButton.style.opacity = '0.5';
+            }
+        }
+
+        async function toggleVR() {
+            if (xrSession === null) {
+                // Enter VR
+                try {
+                    vrButton.textContent = '🔄 Entering VR...';
+                    xrSession = await navigator.xr.requestSession('immersive-vr', {
+                        optionalFeatures: ['hand-tracking', 'local-floor']
+                    });
+                    
+                    await onSessionStarted();
+                    
+                } catch (error) {
+                    console.error('Failed to enter VR:', error);
+                    addMessage('ai', '❌ Failed to enter VR. Make sure you\'re using Quest browser and have permission.');
+                    vrButton.textContent = '🥽 Enter VR';
+                }
+            } else {
+                // Exit VR
+                xrSession.end();
+            }
+        }
+
+        async function onSessionStarted() {
+            xrSession.addEventListener('end', onSessionEnded);
+
+            // Add this line to apply the fullscreen CSS
+            document.body.classList.add('vr-active');
+            
+            // Enable XR rendering
+            await renderer.xr.setSession(xrSession);
+            renderer.xr.enabled = true;
+            
+            // Update button
+            vrButton.textContent = '🚪 Exit VR';
+            isVRMode = true;
+            
+            // Add XR controllers
+            setupVRControllers();
+            
+            addMessage('ai', '🥽 **VR MODE ACTIVATED!** Use voice commands: "show hemoglobin", "fluorescence mode", "load gfp"');
+            
+            // Auto-start voice recognition in VR
+            if (recognition && !isListening) {
+                setTimeout(() => {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log('Voice recognition already active');
+                    }
+                }, 1000);
+            }
+        }
+
+        function onSessionEnded() {
+            xrSession = null;
+            isVRMode = false;
+            vrButton.textContent = '🥽 Enter VR';
+
+            // Add this line to remove the fullscreen CSS
+            document.body.classList.remove('vr-active');
+            
+            // Disable XR rendering
+            renderer.xr.enabled = false;
+            
+            addMessage('ai', '👋 Exited VR mode. Click "Enter VR" to return to immersive experience!');
+        }
+
+        function setupVRControllers() {
+            // Add hand controllers for VR interaction
+            controller1 = renderer.xr.getController(0);
+            controller2 = renderer.xr.getController(1);
+            
+            scene.add(controller1);
+            scene.add(controller2);
+            
+            // Add simple laser pointers
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, -1)
+            ]);
+            
+            const line1 = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+            const line2 = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x0000ff }));
+            
+            controller1.add(line1.clone());
+            controller2.add(line2.clone());
+            
+            // Controller events
+            controller1.addEventListener('select', onControllerSelect);
+            controller2.addEventListener('select', onControllerSelect);
+        }
+
+        function onControllerSelect(event) {
+            // Handle VR controller button press
+            console.log('VR controller selected');
+            
+            // Example: Load random protein on controller press
+            const proteins = Object.keys(proteinDatabase);
+            const randomProtein = proteins[Math.floor(Math.random() * proteins.length)];
+            loadProtein(randomProtein);
+        }
+
+        function animate() {
+            // This replaces requestAnimationFrame for VR compatibility
+            if (proteinGroup) {
+                proteinGroup.rotation.y += 0.003;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Event Listeners
+        // Event Listeners
+        function setupEventListeners() {
+            document.getElementById('voiceButton').onclick = toggleListening;
+            document.getElementById('testButton').onclick = testSystem;
+            document.getElementById('clearChat').onclick = clearChat;
+
+            // ADD THE FOLLOWING BLOCK FOR THE NEW HELP BUTTON
+            const helpButton = document.getElementById('helpButton');
+            const commandsHelp = document.querySelector('.commands-help');
+            helpButton.onclick = function() {
+                // This will toggle the visibility of the commands box
+                const isVisible = commandsHelp.style.display === 'block';
+                commandsHelp.style.display = isVisible ? 'none' : 'block';
+            };
+            // NEW: Add listeners for the model switcher
+            const modelButtons = document.querySelectorAll('#modelSwitcher .model-btn');
+            modelButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Update the active button style
+                    modelButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // Set the new view model and re-render
+                    currentViewModel = button.dataset.model;
+                    renderCurrentProtein();
+                });
+            });
+            
+            window.addEventListener('resize', () => {
+                if (camera && renderer && !isVRMode) {
+                    const canvas = document.getElementById('molecularCanvas');
+                    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                }
+            });
+        }
+        // Voice control functions
+        function toggleListening() {
+            if (!recognition) {
+                addMessage('ai', '❌ Speech recognition not available. Please use text input.');
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    updateStatus(false, 'Requesting microphone access...');
+                    recognition.start();
+                } catch (error) {
+                    addMessage('ai', '❌ Error starting voice recognition. Please use text input.');
+                }
+            }
+        }
+
+        function testSystem() {
+            addMessage('ai', '🧪 Testing enhanced ProteinGPT system...');
+            
+            const testCommands = [
+                'show me insulin',
+                'what does p53 do?',
+                'compare hemoglobin and myoglobin',
+                'diseases of collagen',
+                'list all proteins',
+                'random protein'
+            ];
+            
+            let index = 0;
+            const runNextTest = () => {
+                if (index < testCommands.length) {
+                    setTimeout(() => {
+                        addMessage('ai', `🧪 Testing: "${testCommands[index]}"`);
+                        processCommand(testCommands[index]);
+                        index++;
+                        runNextTest();
+                    }, 2500);
+                } else {
+                    addMessage('ai', '✅ System test completed! Try your own commands now!');
+                }
+            };
+            
+            runNextTest();
+        }
+
+        // Command processing
+        function processCommand(command) {
+            const lowerCommand = command.toLowerCase();
+            addMessage('user', command);
+
+            // Language switching
+            if (lowerCommand.includes('hindi') || lowerCommand.includes('हिंदी')) {
+                switchLanguage('hi-IN', 'hi');
+                return;
+            }
+
+            if (lowerCommand.includes('tamil') || lowerCommand.includes('தமிழ்')) {
+                switchLanguage('ta-IN', 'ta');
+                return;
+            }
+
+            if (lowerCommand.includes('english') || lowerCommand.includes('अंग्रेजी')) {
+                switchLanguage('en-US', 'en');
+                return;
+            }
+
+            // 2. EXTEND VOICE COMMANDS (Add to your processCommand function)
+            // Add these cases to your existing processCommand function
+
+            // Add this to your processCommand function right after language switching:
+            if (lowerCommand.includes('fluorescence') || lowerCommand.includes('fluorescent')) {
+                activateFluorescenceMode();
+                return;
+            }
+
+            if (lowerCommand.includes('excite') || lowerCommand.includes('excitation')) {
+                const wavelength = extractWavelength(command);
+                if (wavelength) {
+                    setExcitationWavelength(wavelength);
+                } else {
+                    addMessage('ai', '🔬 Please specify wavelength: "excite at 488 nanometers" or "excitation 405"');
+                }
+                return;
+            }
+
+            if (lowerCommand.includes('emission') || lowerCommand.includes('detect')) {
+                const wavelength = extractWavelength(command);
+                if (wavelength) {
+                    setEmissionDetection(wavelength);
+                } else {
+                    showEmissionSpectrum();
+                }
+                return;
+            }
+
+            if (lowerCommand.includes('fret') || lowerCommand.includes('energy transfer')) {
+                performFRETAnalysis();
+                return;
+            }
+
+            if (lowerCommand.includes('photobleach') || lowerCommand.includes('bleaching')) {
+                simulatePhotobleaching();
+                return;
+            }
+
+            if (lowerCommand.includes('multi') && lowerCommand.includes('channel')) {
+                activateMultiChannelMode();
+                return;
+            }
+
+            // Check fluorophore database
+            for (let fluorophore in fluorophoreDatabase) {
+                if (lowerCommand.includes(fluorophore)) {
+                    if (lowerCommand.includes('show') || lowerCommand.includes('load')) {
+                        loadFluorophore(fluorophore);
+                        return;
+                    }
+                    if (lowerCommand.includes('excite') || lowerCommand.includes('illuminate')) {
+                        exciteFluorophore(fluorophore);
+                        return;
+                    }
+                    if (lowerCommand.includes('spectrum') || lowerCommand.includes('spectral')) {
+                        showFluorophoreSpectrum(fluorophore);
+                        return;
+                    }
+                }
+            }
+
+
+            // Enhanced protein queries
+            for (let proteinName in proteinDatabase) {
+                if (lowerCommand.includes(proteinName)) {
+                    if (lowerCommand.includes('show') || lowerCommand.includes('load') || lowerCommand.includes('display')) {
+                        loadProtein(proteinName);
+                        return;
+                    }
+                    
+                    if (lowerCommand.includes('what') || lowerCommand.includes('function') || lowerCommand.includes('does')) {
+                        explainProteinDetailed(proteinName);
+                        return;
+                    }
+                    
+                    if (lowerCommand.includes('disease') || lowerCommand.includes('disorder')) {
+                        explainDiseases(proteinName);
+                        return;
+                    }
+                    
+                    if (lowerCommand.includes('drug') || lowerCommand.includes('medicine') || lowerCommand.includes('treatment')) {
+                        explainDrugs(proteinName);
+                        return;
+                    }
+                    
+                    if (lowerCommand.includes('structure')) {
+                        explainStructure(proteinName);
+                        return;
+                    }
+                }
+            }
+
+            // Comparison
+            if (lowerCommand.includes('compare')) {
+                handleComparison(command);
+                return;
+            }
+
+            // List proteins
+            if (lowerCommand.includes('list') || lowerCommand.includes('all proteins')) {
+                listAllProteins();
+                return;
+            }
+
+            // Random protein
+            if (lowerCommand.includes('random') || lowerCommand.includes('surprise')) {
+                loadRandomProtein();
+                return;
+            }
+
+            // Educational content
+            if (lowerCommand.includes('protein folding') || lowerCommand.includes('folding')) {
+                addMessage('ai', 'Protein folding is the process by which a protein chain acquires its functional three-dimensional structure. It\'s driven by hydrophobic interactions, hydrogen bonds, van der Waals forces, and disulfide bonds. Misfolding can cause diseases like Alzheimer\'s, Parkinson\'s, and Huntington\'s disease.');
+                return;
+            }
+
+            // Quiz mode
+            if (lowerCommand.includes('quiz') || lowerCommand.includes('test knowledge')) {
+                startQuizMode();
+                return;
+            }
+
+            // Default response
+            addMessage('ai', `I didn't understand that command. Try: "show me insulin", "what does p53 do?", "compare proteins", or "list all proteins". You can also type questions like ChatGPT!`);
+        }
+
+        // Language switching
+        function switchLanguage(speechLang, displayLang) {
+            currentLanguage = speechLang;
+            
+            if (recognition) {
+                recognition.lang = speechLang;
+            }
+            
+            const indicator = document.getElementById('languageIndicator');
+            const languages = {
+                'en': '🌐 English',
+                'hi': '🇮🇳 हिंदी',
+                'ta': '🇮🇳 தமிழ்'
+            };
+            indicator.textContent = languages[displayLang] || '🌐 English';
+            
+            const message = getCurrentText('language_switched', displayLang);
+            addMessage('ai', message);
+        }
+
+        // Get current language text
+        function getCurrentText(key, lang = null) {
+            const currentLang = lang || (currentLanguage.includes('hi') ? 'hi' : currentLanguage.includes('ta') ? 'ta' : 'en');
+            return languageResponses[currentLang][key] || languageResponses['en'][key] || key;
+        }
+
+        // NEW: PDB Loader and color data
+        const pdbLoader = new THREE.PDBLoader();
+        const CPK_COLORS = {
+            "H": 0xffffff, "C": 0x111111, "N": 0x2222ff, "O": 0xff2222,
+            "F": 0x33ff33, "CL": 0x33ff33, "BR": 0x992222, "I": 0x660066,
+            "HE": 0xffdddd, "NE": 0xffdddd, "AR": 0xffdddd, "P": 0xff9922,
+            "S": 0xffff33, "B": 0xdddd99, "LI": 0xdd44dd, "NA": 0xdd44dd,
+            "K": 0xdd44dd, "MG": 0x66dd66, "CA": 0x66dd66, "FE": 0xdd6622,
+            "default": 0xdddddd
+        };
+
+        // REPLACED: loadProtein function
+        // REPLACED: loadProtein function with label
+        // COMPLETE REPLACEMENT for rendering logic
+
+        // Master function to render the currently loaded protein
+        // Master function to render the currently loaded protein
+        function renderCurrentProtein() {
+            if (!currentPdbData) return;
+            clearProtein();
+            currentPdbData.geometryAtoms.computeBoundingBox();
+            const boundingBox = currentPdbData.geometryAtoms.boundingBox;
+            boundingBox.getCenter(proteinGroup.position).multiplyScalar(-1);
+
+            // Add the 'cartoon' case here
+            if (currentViewModel === 'cartoon') {
+                renderCartoon(currentPdbData);
+            } else if (currentViewModel === 'ball_and_stick') {
+                renderBallAndStick(currentPdbData);
+            } else if (currentViewModel === 'space_filling') {
+                renderSpaceFilling(currentPdbData);
+            } else if (currentViewModel === 'backbone') {
+                renderBackbone(currentPdbData);
+            }
+            
+            const protein = proteinDatabase[currentProtein];
+            if (protein) {
+                const topY = boundingBox.max.y;
+                addProteinLabel(protein.name, topY);
+            }
+        }
+        /**
+        * FIXED: renderBallAndStick
+        * Correctly handles element data type to prevent .trim() error.
+        */
+        function renderBallAndStick(pdb) {
+            const geometryAtoms = pdb.geometryAtoms;
+            const geometryBonds = pdb.geometryBonds;
+            const json = pdb.json;
+            const position = new THREE.Vector3();
+            const color = new THREE.Color();
+
+            for (let i = 0; i < geometryAtoms.attributes.position.count; i++) {
+                position.fromBufferAttribute(geometryAtoms.attributes.position, i);
+                // FIX: Convert element to string before trimming
+                const element = String(json.atoms[i][4]).trim();
+                color.setHex(CPK_COLORS[element] || CPK_COLORS['default']);
+                const atom = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), new THREE.MeshPhongMaterial({ color: color }));
+                atom.position.copy(position);
+                proteinGroup.add(atom);
+            }
+
+            const start = new THREE.Vector3();
+            const end = new THREE.Vector3();
+            for (let i = 0; i < geometryBonds.attributes.position.count; i += 2) {
+                start.fromBufferAttribute(geometryBonds.attributes.position, i);
+                end.fromBufferAttribute(geometryBonds.attributes.position, i + 1);
+                const bond = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, start.distanceTo(end), 8, 1), new THREE.MeshPhongMaterial({ color: 0xcccccc }));
+                bond.position.copy(start).lerp(end, 0.5);
+                bond.lookAt(end);
+                proteinGroup.add(bond);
+            }
+        }
+
+        function renderSpaceFilling(pdb) {
+            const geometryAtoms = pdb.geometryAtoms;
+            const json = pdb.json;
+            const position = new THREE.Vector3();
+            const color = new THREE.Color();
+
+            for (let i = 0; i < geometryAtoms.attributes.position.count; i++) {
+                position.fromBufferAttribute(geometryAtoms.attributes.position, i);
+                // FIX: Convert element to string before trimming
+                const element = String(json.atoms[i][4]).trim();
+                color.setHex(CPK_COLORS[element] || CPK_COLORS['default']);
+                const atom = new THREE.Mesh(new THREE.SphereGeometry(1.5, 16, 16), new THREE.MeshPhongMaterial({ color: color }));
+                atom.position.copy(position);
+                proteinGroup.add(atom);
+            }
+        }
+
+        /**
+        * FIXED: renderBackbone
+        * Correctly handles atom name data type to prevent .trim() error.
+        */
+        function renderBackbone(pdb) {
+            const geometryAtoms = pdb.geometryAtoms;
+            const json = pdb.json;
+            const alphaCarbons = [];
+            const color = new THREE.Color(0xff8c00);
+
+            for (let i = 0; i < geometryAtoms.attributes.position.count; i++) {
+                // FIX: Convert atom name to string before trimming
+                const atomName = String(json.atoms[i][2]).trim();
+                
+                if (atomName === 'CA') {
+                    const position = new THREE.Vector3();
+                    position.fromBufferAttribute(geometryAtoms.attributes.position, i);
+                    alphaCarbons.push(position);
+                }
+            }
+            if (alphaCarbons.length < 2) return;
+
+            const curve = new THREE.CatmullRomCurve3(alphaCarbons);
+            const tubeGeometry = new THREE.TubeGeometry(curve, alphaCarbons.length * 2, 0.2, 8, false);
+            const material = new THREE.MeshPhongMaterial({ color: color });
+            const tube = new THREE.Mesh(tubeGeometry, material);
+            proteinGroup.add(tube);
+        }
+
+        /**
+        * FIXED: renderCartoon
+        * Correctly handles atom name data type and improves rendering logic for secondary structures.
+        */
+        function renderCartoon(pdb) {
+            const json = pdb.json;
+            const atoms = json.atoms;
+            const atomPositions = pdb.geometryAtoms.attributes.position;
+            const residues = {};
+
+            for (let i = 0; i < atoms.length; i++) {
+                const resSeq = atoms[i][5];
+                if (!residues[resSeq]) {
+                    residues[resSeq] = { atoms: [] };
+                }
+                // FIX: Convert atom name to string before trimming
+                const atomName = String(atoms[i][2]).trim();
+                residues[resSeq].atoms.push({
+                    name: atomName,
+                    position: new THREE.Vector3().fromBufferAttribute(atomPositions, i)
+                });
+            }
+
+            const backbonePoints = Object.values(residues).map(r => r.atoms.find(a => a.name === 'CA')?.position).filter(p => p);
+            if (backbonePoints.length < 2) return;
+            
+            const curve = new THREE.CatmullRomCurve3(backbonePoints);
+            const tubeGeometry = new THREE.TubeGeometry(curve, backbonePoints.length * 5, 0.3, 8, false);
+            const tubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888, shininess: 70 });
+            proteinGroup.add(new THREE.Mesh(tubeGeometry, tubeMaterial));
+
+            const helixMaterial = new THREE.MeshPhongMaterial({ color: 0xff0088, shininess: 70 });
+            const sheetMaterial = new THREE.MeshPhongMaterial({ color: 0x00c0ff, shininess: 70 });
+
+            if (json.helices) {
+                json.helices.forEach(helix => {
+                    const startIdx = Object.keys(residues).indexOf(String(helix[2]));
+                    const endIdx = Object.keys(residues).indexOf(String(helix[5]));
+                    if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) return;
+                    
+                    const helixPoints = backbonePoints.slice(startIdx, endIdx + 1);
+                    if (helixPoints.length > 1) {
+                        const helixCurve = new THREE.CatmullRomCurve3(helixPoints);
+                        proteinGroup.add(new THREE.Mesh(new THREE.TubeGeometry(helixCurve, helixPoints.length * 5, 0.5, 8, false), helixMaterial));
+                    }
+                });
+            }
+
+            if (json.sheets) {
+                json.sheets.forEach(sheetData => {
+                    sheetData[1].forEach(strand => {
+                        const startIdx = Object.keys(residues).indexOf(String(strand[1]));
+                        const endIdx = Object.keys(residues).indexOf(String(strand[4]));
+                        if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) return;
+
+                        const sheetPoints = backbonePoints.slice(startIdx, endIdx + 1);
+                        if (sheetPoints.length > 1) {
+                            const sheetCurve = new THREE.CatmullRomCurve3(sheetPoints);
+                            const sheetMesh = new THREE.Mesh(new THREE.TubeGeometry(sheetCurve, sheetPoints.length * 5, 0.5, 4, false), sheetMaterial);
+                            sheetMesh.scale.y = 0.2; // Flatten the tube to look like a ribbon
+                            proteinGroup.add(sheetMesh);
+                        }
+                    });
+                });
+            }
+        }
+        function loadProtein(proteinName) {
+            const protein = proteinDatabase[proteinName];
+            if (!protein || !protein.pdbId) {
+                addMessage('ai', `Sorry, I don't have a PDB ID for ${proteinName}.`);
+                return;
+            }
+            showLoading(true);
+            currentProtein = proteinName;
+            clearProtein();
+
+            const url = `https://files.rcsb.org/download/${protein.pdbId}.pdb`;
+            addMessage('ai', `Fetching 3D structure for ${protein.name} from PDB (${protein.pdbId})...`);
+
+            pdbLoader.load(url, function(pdb) {
+                currentPdbData = pdb; // Save the loaded data
+                renderCurrentProtein(); // Render the model for the first time
+                
+                showProteinInfo(protein);
+                showLoading(false);
+                addMessage('ai', `${protein.name} loaded successfully! You can now switch between different 3D models.`);
+            }, null, function() {
+                showLoading(false);
+                addMessage('ai', `❌ Could not load the PDB file for ${protein.name}. The file might be too large or unavailable.`);
+            });
+        }
+        function explainProteinDetailed(proteinName) {
+            const protein = proteinDatabase[proteinName];
+            if (!protein) return;
+
+            const currentLang = currentLanguage.includes('hi') ? 'hi' : currentLanguage.includes('ta') ? 'ta' : 'en';
+            
+            if (currentLang !== 'en') {
+                const localizedDesc = languageResponses[currentLang][proteinName];
+                if (localizedDesc) {
+                    addMessage('ai', `${protein.name}: ${localizedDesc}`);
+                    return;
+                }
+            }
+            
+            const response = `🧬 **${protein.name}**\n\n` +
+                           `**Function:** ${protein.function}\n\n` +
+                           `**Classification:** ${protein.classification}\n` +
+                           `**Molecular Weight:** ${protein.molecularWeight}\n` +
+                           `**Location:** ${protein.location}\n\n` +
+                           `**Clinical Significance:** ${protein.diseases_detail}`;
+            
+            addMessage('ai', response);
+        }
+
+        function explainDiseases(proteinName) {
+            const protein = proteinDatabase[proteinName];
+            if (!protein) return;
+
+            addMessage('ai', `🏥 **Diseases related to ${protein.name}:**\n\n${protein.diseases_detail}\n\n**Research Areas:** ${protein.research_areas}`);
+        }
+
+        function explainDrugs(proteinName) {
+            const protein = proteinDatabase[proteinName];
+            if (!protein) return;
+
+            addMessage('ai', `💊 **Drug targets for ${protein.name}:**\n\n${protein.drug_targets}\n\n**Research Focus:** ${protein.research_areas}`);
+        }
+
+        function explainStructure(proteinName) {
+            const protein = proteinDatabase[proteinName];
+            if (!protein) return;
+
+            addMessage('ai', `🏗️ **${protein.name} Structure:**\n\n${protein.structure}\n\n**Molecular Weight:** ${protein.molecularWeight}\n**PDB ID:** ${protein.pdbId}`);
+        }
+
+        function handleComparison(command) {
+            const proteins = Object.keys(proteinDatabase);
+            const foundProteins = proteins.filter(p => command.toLowerCase().includes(p));
+            
+            if (foundProteins.length >= 2) {
+                const protein1 = proteinDatabase[foundProteins[0]];
+                const protein2 = proteinDatabase[foundProteins[1]];
+                
+                addMessage('ai', `⚖️ **Comparing ${protein1.name} vs ${protein2.name}:**\n\n` +
+                                `**${protein1.name}:**\n• Function: ${protein1.function}\n• Location: ${protein1.location}\n• MW: ${protein1.molecularWeight}\n\n` +
+                                `**${protein2.name}:**\n• Function: ${protein2.function}\n• Location: ${protein2.location}\n• MW: ${protein2.molecularWeight}`);
+                
+                loadProteinComparison(foundProteins[0], foundProteins[1]);
+            } else {
+                addMessage('ai', 'Please specify two proteins to compare, like "compare hemoglobin and myoglobin"');
+            }
+        }
+
+        function listAllProteins() {
+            const proteinList = Object.keys(proteinDatabase).map(key => {
+                const protein = proteinDatabase[key];
+                return `• ${protein.name} - ${protein.classification}`;
+            }).join('\n');
+            
+            addMessage('ai', `🗂️ **Available proteins in database:**\n\n${proteinList}\n\nSay "show me [protein name]" to visualize any protein!`);
+        }
+
+        function loadRandomProtein() {
+            const proteins = Object.keys(proteinDatabase);
+            const randomProtein = proteins[Math.floor(Math.random() * proteins.length)];
+            const protein = proteinDatabase[randomProtein];
+            
+            addMessage('ai', `🎲 **Random protein selected:** ${protein.name}`);
+            loadProtein(randomProtein);
+        }
+
+        function startQuizMode() {
+            const proteins = Object.keys(proteinDatabase);
+            const randomProtein = proteins[Math.floor(Math.random() * proteins.length)];
+            const protein = proteinDatabase[randomProtein];
+            
+            loadProtein(randomProtein);
+            addMessage('ai', `🧪 **QUIZ MODE:** I'm showing you a protein. Can you guess what it is?\n\n💡 **Hint:** ${protein.function.substring(0, 40)}...\n\nType or say the protein name when you think you know it!`);
+        }
+
+        // 3D Visualization functions
+        function createProteinVisualization(protein) {
+            const geometry = new THREE.SphereGeometry(2, 32, 32);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: protein.color,
+                transparent: true,
+                opacity: 0.85,
+                shininess: 100
+            });
+            const mainSphere = new THREE.Mesh(geometry, material);
+            proteinGroup.add(mainSphere);
+            
+            // Enhanced atom visualization
+            const colors = [protein.color, '#ff6b47', '#00d2d3', '#32ff7e', '#e056fd'];
+            
+            for (let i = 0; i < 35; i++) {
+                const radius = 0.2 + Math.random() * 0.5;
+                const atomGeometry = new THREE.SphereGeometry(radius, 16, 16);
+                const atomMaterial = new THREE.MeshPhongMaterial({ 
+                    color: colors[i % colors.length],
+                    transparent: true,
+                    opacity: 0.7
+                });
+                
+                const atom = new THREE.Mesh(atomGeometry, atomMaterial);
+                
+                const distance = 3 + Math.random() * 5;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                
+                atom.position.x = distance * Math.sin(phi) * Math.cos(theta);
+                atom.position.y = distance * Math.sin(phi) * Math.sin(theta);
+                atom.position.z = distance * Math.cos(phi);
+                
+                proteinGroup.add(atom);
+            }
+            
+            // Enhanced bonds
+            for (let i = 0; i < 20; i++) {
+                const bondGeometry = new THREE.BufferGeometry();
+                const start = new THREE.Vector3(
+                    (Math.random() - 0.5) * 8,
+                    (Math.random() - 0.5) * 8,
+                    (Math.random() - 0.5) * 8
+                );
+                const end = new THREE.Vector3(
+                    (Math.random() - 0.5) * 8,
+                    (Math.random() - 0.5) * 8,
+                    (Math.random() - 0.5) * 8
+                );
+                
+                bondGeometry.setFromPoints([start, end]);
+                const bondMaterial = new THREE.LineBasicMaterial({ 
+                    color: '#ffffff',
+                    transparent: true,
+                    opacity: 0.6
+                });
+                const bond = new THREE.Line(bondGeometry, bondMaterial);
+                proteinGroup.add(bond);
+            }
+            
+            addProteinLabel(protein.name);
+        }
+
+        function loadProteinComparison(protein1, protein2) {
+            clearProtein();
+            createProteinAtPosition(proteinDatabase[protein1], -5, 0, 0);
+            createProteinAtPosition(proteinDatabase[protein2], 5, 0, 0);
+        }
+
+        function createProteinAtPosition(protein, x, y, z) {
+            const geometry = new THREE.SphereGeometry(1.5, 32, 32);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: protein.color,
+                transparent: true,
+                opacity: 0.8
+            });
+            const mainSphere = new THREE.Mesh(geometry, material);
+            mainSphere.position.set(x, y, z);
+            proteinGroup.add(mainSphere);
+            
+            for (let i = 0; i < 15; i++) {
+                const radius = 0.2 + Math.random() * 0.3;
+                const atomGeometry = new THREE.SphereGeometry(radius, 16, 16);
+                const atomMaterial = new THREE.MeshPhongMaterial({ 
+                    color: protein.color,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const atom = new THREE.Mesh(atomGeometry, atomMaterial);
+                
+                const distance = 2 + Math.random() * 2;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                
+                atom.position.x = x + distance * Math.sin(phi) * Math.cos(theta);
+                atom.position.y = y + distance * Math.sin(phi) * Math.sin(theta);
+                atom.position.z = z + distance * Math.cos(phi);
+                
+                proteinGroup.add(atom);
+            }
+            
+            addProteinLabelAtPosition(protein.name, x, y + 3, z);
+        }
+
+        function addProteinLabel(name, yPosition) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 128;
+            
+            context.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            context.strokeStyle = '#ff8c00';
+            context.lineWidth = 3;
+            context.strokeRect(5, 5, canvas.width-10, canvas.height-10);
+            
+            context.fillStyle = '#ff8c00';
+            context.font = 'bold 48px Arial';
+            context.textAlign = 'center';
+            context.fillText(name, canvas.width/2, canvas.height/2 + 15);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(8, 2, 1);
+            // Use the provided yPosition and add a margin of 2 units
+            sprite.position.set(0, yPosition + 2, 0); 
+            
+            proteinGroup.add(sprite);
+        }
+        function addProteinLabelAtPosition(name, x, y, z) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 64;
+            
+            context.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            context.fillStyle = '#ff8c00';
+            context.font = 'bold 24px Arial';
+            context.textAlign = 'center';
+            context.fillText(name, canvas.width/2, canvas.height/2 + 8);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(4, 1, 1);
+            sprite.position.set(x, y, z);
+            
+            proteinGroup.add(sprite);
+        }
+
+        function clearProtein() {
+            while(proteinGroup.children.length > 0) {
+                const child = proteinGroup.children[0];
+                proteinGroup.remove(child);
+                
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach(material => material.dispose());
+                    } else {
+                        child.material.dispose();
+                    }
+                }
+            }
+        }
+
+        // 3. ADD FLUORESCENCE FUNCTIONS (Add these new functions)
+
+        // Global fluorescence state
+        let fluorescenceMode = false;
+        let currentExcitationWavelength = 488;
+        let currentEmissionFilter = 520;
+        let activeFluorophores = [];
+
+        function activateFluorescenceMode() {
+            fluorescenceMode = true;
+            addMessage('ai', '🔬 **FLUORESCENCE MICROSCOPY MODE ACTIVATED!**\n\nAvailable commands:\n• "excite at 488 nanometers"\n• "show gfp spectrum"\n• "load cfp and yfp"\n• "perform fret analysis"\n• "multi channel imaging"');
+            
+            // Change scene lighting for fluorescence
+            updateSceneLighting();
+        }
+
+        function extractWavelength(command) {
+            const match = command.match(/(\d+)\s*(nm|nanometer|nanometers)?/i);
+            return match ? parseInt(match[1]) : null;
+        }
+
+        function setExcitationWavelength(wavelength) {
+            currentExcitationWavelength = wavelength;
+            addMessage('ai', `🔬 **Excitation wavelength set to ${wavelength} nm**\n\nExciting fluorophores...`);
+            
+            // Update 3D visualization
+            updateExcitationVisualization(wavelength);
+            
+            // Check which fluorophores are excited
+            checkFluorophoreExcitation(wavelength);
+        }
+
+        function setEmissionDetection(wavelength) {
+            currentEmissionFilter = wavelength;
+            addMessage('ai', `🔬 **Emission filter set to ${wavelength} nm**\n\nDetecting emitted light...`);
+            
+            updateEmissionVisualization(wavelength);
+        }
+
+        function loadFluorophore(fluorophoreName) {
+            const fluorophore = fluorophoreDatabase[fluorophoreName];
+            if (!fluorophore) return;
+            
+            activeFluorophores.push(fluorophoreName);
+            
+            addMessage('ai', `🧬 **${fluorophore.name} loaded!**\n\n` +
+                            `• Excitation Peak: ${fluorophore.excitationPeak} nm\n` +
+                            `• Emission Peak: ${fluorophore.emissionPeak} nm\n` +
+                            `• Quantum Yield: ${fluorophore.quantumYield}\n` +
+                            `• Applications: ${fluorophore.applications.join(', ')}`);
+            
+            // Create fluorescent protein visualization
+            createFluorescentProteinVisualization(fluorophore);
+        }
+
+        function exciteFluorophore(fluorophoreName) {
+            const fluorophore = fluorophoreDatabase[fluorophoreName];
+            if (!fluorophore) return;
+            
+            setExcitationWavelength(fluorophore.excitationPeak);
+            
+            addMessage('ai', `⚡ **Exciting ${fluorophore.name}**\n\n` +
+                            `Excitation: ${fluorophore.excitationPeak} nm → Emission: ${fluorophore.emissionPeak} nm\n` +
+                            `Expected emission color: ${fluorophore.name.includes('Green') ? 'Green' : 
+                                                        fluorophore.name.includes('Red') ? 'Red' : 
+                                                        fluorophore.name.includes('Cyan') ? 'Cyan' : 
+                                                        fluorophore.name.includes('Yellow') ? 'Yellow' : 'Blue'}`);
+            
+            // Animate fluorescence emission
+            animateFluorescenceEmission(fluorophore);
+        }
+
+        function showFluorophoreSpectrum(fluorophoreName) {
+            const fluorophore = fluorophoreDatabase[fluorophoreName];
+            if (!fluorophore) return;
+            
+            addMessage('ai', `📊 **${fluorophore.name} Spectral Properties**\n\n` +
+                            `🔵 **Excitation Peak:** ${fluorophore.excitationPeak} nm\n` +
+                            `🔴 **Emission Peak:** ${fluorophore.emissionPeak} nm\n` +
+                            `⚡ **Quantum Yield:** ${fluorophore.quantumYield}\n` +
+                            `💡 **Brightness:** ${fluorophore.brightness}\n` +
+                            `⏱️ **Maturation Time:** ${fluorophore.maturationTime}\n` +
+                            `📉 **Photobleaching:** ${fluorophore.photobleaching}`);
+        }
+
+        function performFRETAnalysis() {
+            const cfp = fluorophoreDatabase['cfp'];
+            const yfp = fluorophoreDatabase['yfp'];
+            
+            if (!cfp || !yfp) {
+                addMessage('ai', '🔬 **FRET Analysis requires CFP and YFP**\n\nSay "load cfp" and "load yfp" first!');
+                return;
+            }
+            
+            // Simulate FRET efficiency calculation
+            const distance = 3.5; // nm - typical FRET distance
+            const R0 = 4.9; // nm - Förster distance for CFP-YFP
+            const efficiency = 1 / (1 + Math.pow(distance / R0, 6));
+            
+            addMessage('ai', `🔬 **FRET Analysis: CFP → YFP**\n\n` +
+                            `• Donor: CFP (${cfp.emissionPeak} nm)\n` +
+                            `• Acceptor: YFP (${yfp.excitationPeak} nm)\n` +
+                            `• Förster Distance (R₀): ${R0} nm\n` +
+                            `• Estimated Distance: ${distance} nm\n` +
+                            `• **FRET Efficiency: ${(efficiency * 100).toFixed(1)}%**\n\n` +
+                            `This indicates ${efficiency > 0.5 ? 'STRONG' : 'MODERATE'} protein interaction!`);
+            
+            // Visualize FRET in 3D
+            visualizeFRET(cfp, yfp, efficiency);
+        }
+
+        function simulatePhotobleaching() {
+            addMessage('ai', '🔬 **Photobleaching Simulation**\n\nContinuous illumination causes fluorophore degradation...\n\n' +
+                            '• GFP: Moderate photobleaching\n' +
+                            '• RFP: High photobleaching (fades quickly)\n' +
+                            '• CFP: Moderate photobleaching\n' +
+                            '• YFP: Low photobleaching (most stable)');
+            
+            // Animate photobleaching effect
+            animatePhotobleaching();
+        }
+
+        function activateMultiChannelMode() {
+            addMessage('ai', '🔬 **Multi-Channel Imaging Mode**\n\n' +
+                            '📘 **Channel 1:** DAPI (358→461 nm) - Blue - Nuclei\n' +
+                            '📗 **Channel 2:** GFP (488→509 nm) - Green - Proteins\n' +
+                            '📙 **Channel 3:** RFP (558→583 nm) - Red - Organelles\n\n' +
+                            'Sequential excitation prevents bleed-through!');
+            
+            // Create multi-channel visualization
+            createMultiChannelVisualization();
+        }
+
+        // 4. ADD 3D VISUALIZATION FUNCTIONS
+
+        function createFluorescentProteinVisualization(fluorophore) {
+            clearProtein();
+            
+            // Create main fluorescent protein
+            const geometry = new THREE.SphereGeometry(2, 32, 32);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: fluorophore.color,
+                transparent: true,
+                opacity: 0.8,
+                emissive: fluorophore.color,
+                emissiveIntensity: 0.3
+            });
+            
+            const mainSphere = new THREE.Mesh(geometry, material);
+            proteinGroup.add(mainSphere);
+            
+            // Add fluorescent particles
+            for (let i = 0; i < 50; i++) {
+                const particleGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+                const particleMaterial = new THREE.MeshBasicMaterial({ 
+                    color: fluorophore.color,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+                
+                const distance = 4 + Math.random() * 3;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                
+                particle.position.x = distance * Math.sin(phi) * Math.cos(theta);
+                particle.position.y = distance * Math.sin(phi) * Math.sin(theta);
+                particle.position.z = distance * Math.cos(phi);
+                
+                proteinGroup.add(particle);
+            }
+            
+            addProteinLabel(fluorophore.name);
+        }
+
+        function updateExcitationVisualization(wavelength) {
+            const excitationColor = wavelengthToColor(wavelength);
+            
+            // Update scene lighting to match excitation
+            const directionalLight = scene.children.find(child => child.type === 'DirectionalLight');
+            if (directionalLight) {
+                directionalLight.color.setHex(excitationColor);
+                directionalLight.intensity = 1.5;
+            }
+            
+            // Create excitation beam effect
+            const beamGeometry = new THREE.CylinderGeometry(0.5, 0.5, 10, 8);
+            const beamMaterial = new THREE.MeshBasicMaterial({ 
+                color: excitationColor,
+                transparent: true,
+                opacity: 0.3
+            });
+            
+            const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+            beam.position.set(0, 0, -5);
+            beam.rotation.x = Math.PI / 2;
+            scene.add(beam);
+            
+            // Remove beam after animation
+            setTimeout(() => {
+                scene.remove(beam);
+            }, 2000);
+        }
+
+        function animateFluorescenceEmission(fluorophore) {
+            // Create emission particles
+            for (let i = 0; i < 20; i++) {
+                const particleGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+                const particleMaterial = new THREE.MeshBasicMaterial({ 
+                    color: fluorophore.color,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+                particle.position.set(
+                    (Math.random() - 0.5) * 4,
+                    (Math.random() - 0.5) * 4,
+                    (Math.random() - 0.5) * 4
+                );
+                
+                proteinGroup.add(particle);
+                
+                // Animate particle emission
+                const targetPosition = {
+                    x: particle.position.x * 3,
+                    y: particle.position.y * 3,
+                    z: particle.position.z * 3
+                };
+                
+                animateParticleEmission(particle, targetPosition);
+            }
+        }
+
+        function animateParticleEmission(particle, target) {
+            const startTime = Date.now();
+            const duration = 1000;
+            
+            const startPosition = { ...particle.position };
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                particle.position.x = startPosition.x + (target.x - startPosition.x) * progress;
+                particle.position.y = startPosition.y + (target.y - startPosition.y) * progress;
+                particle.position.z = startPosition.z + (target.z - startPosition.z) * progress;
+                
+                particle.material.opacity = 0.8 * (1 - progress);
+                
+                if (progress < 1) {
+                    renderer.setAnimationLoop(animate); // VR-compatible animation
+                } else {
+                    proteinGroup.remove(particle);
+                }
+            }
+            
+            animate();
+        }
+
+        function wavelengthToColor(wavelength) {
+            // Convert wavelength to RGB color
+            if (wavelength >= 380 && wavelength < 440) {
+                return 0x8B00FF; // Violet
+            } else if (wavelength >= 440 && wavelength < 490) {
+                return 0x0000FF; // Blue
+            } else if (wavelength >= 490 && wavelength < 510) {
+                return 0x00FFFF; // Cyan
+            } else if (wavelength >= 510 && wavelength < 580) {
+                return 0x00FF00; // Green
+            } else if (wavelength >= 580 && wavelength < 645) {
+                return 0xFFFF00; // Yellow
+            } else if (wavelength >= 645 && wavelength < 750) {
+                return 0xFF0000; // Red
+            } else {
+                return 0xFFFFFF; // White
+            }
+        }
+
+        function visualizeFRET(donor, acceptor, efficiency) {
+            clearProtein();
+            
+            // Create donor protein (CFP)
+            const donorGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+            const donorMaterial = new THREE.MeshPhongMaterial({ 
+                color: donor.color,
+                transparent: true,
+                opacity: 0.8,
+                emissive: donor.color,
+                emissiveIntensity: 0.2
+            });
+            
+            const donorSphere = new THREE.Mesh(donorGeometry, donorMaterial);
+            donorSphere.position.set(-3, 0, 0);
+            proteinGroup.add(donorSphere);
+            
+            // Create acceptor protein (YFP)
+            const acceptorGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+            const acceptorMaterial = new THREE.MeshPhongMaterial({ 
+                color: acceptor.color,
+                transparent: true,
+                opacity: 0.8,
+                emissive: acceptor.color,
+                emissiveIntensity: 0.2
+            });
+            
+            const acceptorSphere = new THREE.Mesh(acceptorGeometry, acceptorMaterial);
+            acceptorSphere.position.set(3, 0, 0);
+            proteinGroup.add(acceptorSphere);
+            
+            // Create FRET connection
+            const fretGeometry = new THREE.BufferGeometry();
+            fretGeometry.setFromPoints([
+                new THREE.Vector3(-3, 0, 0),
+                new THREE.Vector3(3, 0, 0)
+            ]);
+            
+            const fretMaterial = new THREE.LineBasicMaterial({ 
+                color: 0xFFFFFF,
+                transparent: true,
+                opacity: efficiency
+            });
+            
+            const fretLine = new THREE.Line(fretGeometry, fretMaterial);
+            proteinGroup.add(fretLine);
+            
+            // Add labels
+            addProteinLabelAtPosition('CFP (Donor)', -3, 2, 0);
+            addProteinLabelAtPosition('YFP (Acceptor)', 3, 2, 0);
+            addProteinLabelAtPosition(`FRET: ${(efficiency * 100).toFixed(1)}%`, 0, -2, 0);
+        }
+
+        function animatePhotobleaching() {
+            // Gradually reduce fluorescence intensity
+            const fluorophores = proteinGroup.children.filter(child => child.material && child.material.emissive);
+            
+            fluorophores.forEach(fluorophore => {
+                const startIntensity = fluorophore.material.emissiveIntensity;
+                const startTime = Date.now();
+                const duration = 3000;
+                
+                function fadeOut() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    fluorophore.material.emissiveIntensity = startIntensity * (1 - progress);
+                    fluorophore.material.opacity = 0.8 * (1 - progress * 0.7);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(fadeOut);
+                    }
+                }
+                
+                fadeOut();
+            });
+        }
+
+        function createMultiChannelVisualization() {
+            clearProtein();
+            
+            // Channel 1: DAPI (Blue - Nucleus)
+            const nucleusGeometry = new THREE.SphereGeometry(1, 32, 32);
+            const nucleusMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x0000FF,
+                transparent: true,
+                opacity: 0.6,
+                emissive: 0x0000FF,
+                emissiveIntensity: 0.3
+            });
+            
+            const nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
+            nucleus.position.set(0, 0, 0);
+            proteinGroup.add(nucleus);
+            
+            // Channel 2: GFP (Green - Cytoplasm)
+            const cytoplasmGeometry = new THREE.SphereGeometry(2.5, 32, 32);
+            const cytoplasmMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x00FF00,
+                transparent: true,
+                opacity: 0.3,
+                emissive: 0x00FF00,
+                emissiveIntensity: 0.2
+            });
+            
+            const cytoplasm = new THREE.Mesh(cytoplasmGeometry, cytoplasmMaterial);
+            cytoplasm.position.set(0, 0, 0);
+            proteinGroup.add(cytoplasm);
+            
+            // Channel 3: RFP (Red - Organelles)
+            for (let i = 0; i < 8; i++) {
+                const organelleGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+                const organelleMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xFF0000,
+                    transparent: true,
+                    opacity: 0.8,
+                    emissive: 0xFF0000,
+                    emissiveIntensity: 0.4
+                });
+                
+                const organelle = new THREE.Mesh(organelleGeometry, organelleMaterial);
+                
+                const distance = 1.5 + Math.random() * 0.8;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                
+                organelle.position.x = distance * Math.sin(phi) * Math.cos(theta);
+                organelle.position.y = distance * Math.sin(phi) * Math.sin(theta);
+                organelle.position.z = distance * Math.cos(phi);
+                
+                proteinGroup.add(organelle);
+            }
+            
+            addProteinLabel('Multi-Channel Cell');
+        }
+
+        function checkFluorophoreExcitation(wavelength) {
+            const excitedFluorophores = [];
+            
+            for (let name in fluorophoreDatabase) {
+                const fluorophore = fluorophoreDatabase[name];
+                const excitationRange = 20; // nm tolerance
+                
+                if (Math.abs(fluorophore.excitationPeak - wavelength) <= excitationRange) {
+                    excitedFluorophores.push(`${fluorophore.name} (${fluorophore.excitationPeak} nm)`);
+                }
+            }
+            
+            if (excitedFluorophores.length > 0) {
+                addMessage('ai', `⚡ **Fluorophores excited at ${wavelength} nm:**\n\n${excitedFluorophores.join('\n')}`);
+            } else {
+                addMessage('ai', `🔬 No fluorophores excited at ${wavelength} nm. Try:\n• 358 nm (DAPI)\n• 488 nm (GFP)\n• 558 nm (RFP)`);
+            }
+        }
+
+        function updateSceneLighting() {
+            // Add UV/Blue excitation lighting
+            const uvLight = new THREE.PointLight(0x8B00FF, 0.5);
+            uvLight.position.set(0, 10, 10);
+            scene.add(uvLight);
+            
+            // Add detection filters (colored lighting)
+            const greenFilter = new THREE.PointLight(0x00FF00, 0.3);
+            greenFilter.position.set(5, 0, 5);
+            scene.add(greenFilter);
+            
+            const redFilter = new THREE.PointLight(0xFF0000, 0.3);
+            redFilter.position.set(-5, 0, 5);
+            scene.add(redFilter);
+        }
+
+        // UI Functions
+        function addMessage(sender, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const senderName = sender === 'user' ? 'You' : 'ProteinGPT';
+            messageDiv.innerHTML = `<strong>${senderName}:</strong> ${message.replace(/\n/g, '<br>')}`;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateStatus(active, text) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.classList.toggle('active', active);
+            statusText.textContent = text;
+        }
+
+        function showProteinInfo(protein) {
+            const proteinInfo = document.getElementById('proteinInfo');
+            document.getElementById('proteinName').textContent = protein.name;
+            document.getElementById('proteinFunction').textContent = protein.function;
+            document.getElementById('proteinStructure').textContent = protein.structure;
+            document.getElementById('proteinLocation').textContent = protein.location;
+            document.getElementById('proteinDiseases').textContent = protein.diseases_detail;
+            document.getElementById('proteinDrugs').textContent = protein.drug_targets;
+            proteinInfo.style.display = 'block';
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loadingIndicator');
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        function clearChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="message ai-message">
+                    <strong>ProteinGPT:</strong> Chat cleared! Ready for new questions. You can use voice commands or type like ChatGPT!
+                </div>
+            `;
+        }
+
+        function updateCommandsHelp() {
+            const commandsHelp = document.querySelector('.commands-help ul');
+            if (commandsHelp) {
+                commandsHelp.innerHTML = `
+                    <li>🔹 "show me [protein]" - Visualize any protein</li>
+                    <li>🔹 "what does [protein] do?" - Function details</li>
+                    <li>🔹 "fluorescence mode" - Activate fluorescence microscopy</li>
+                    <li>🔹 "load gfp" - Load fluorescent proteins</li>
+                    <li>🔹 "excite at 488 nanometers" - Set excitation wavelength</li>
+                    <li>🔹 "show cfp spectrum" - Display spectral properties</li>
+                    <li>🔹 "perform fret analysis" - Analyze protein interactions</li>
+                    <li>🔹 "multi channel imaging" - Multi-color visualization</li>
+                    <li>🔹 "compare proteins" - Side-by-side analysis</li>
+                    <li>🔹 "list all proteins" - Database overview</li>
+                    <li>🔹 "random protein" - Discover new proteins</li>
+                    <li>🔹 "switch to hindi/tamil" - Language change</li>
+                `;
+            }
+        }
+
+
+        // Initialize when page loads
+        window.onload = initializeApp;
+        // Call this function after your initializeApp
+        updateCommandsHelp();
+        
+        console.log('🥽 VR-Enhanced ProteinGPT loaded!');
+        console.log('Click "Enter VR" to start immersive experience!');
+
+        console.log('🔬 VR Fluorescence Microscopy Extensions loaded!');
+        console.log('Say "fluorescence mode" to activate!');
+    </script>
+</body>
+</html>
