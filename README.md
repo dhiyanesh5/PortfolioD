@@ -1,6 +1,6 @@
 # PortfolioD
 
-This is a portfolio website showcasing projects, skills, and experience. The website is designed to highlight professional accomplishments and provide an interactive way for visitors to explore the creator's work.
+This is a portfolio website showcasing my projects, skills, and experience. The website is designed to highlight professional accomplishments and provide an interactive way for visitors to explore the creator's work.
 
 ## Features
 
